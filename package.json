@@ -1,0 +1,27 @@
+{
+  "name": "dali",
+  "displayName": "dali",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Language support for TS in markdown",
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./node_modules/@dali/vscode-client/out/extension",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "watch": "tsc -b tsconfig.build.json -w"
+  },
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
+  "devDependencies": {
+    "@types/node": "latest",
+    "typescript": "latest"
+  },
+  "engines": {
+    "vscode": "^1.52.0"
+  }
+}
