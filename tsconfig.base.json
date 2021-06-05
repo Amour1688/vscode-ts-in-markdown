@@ -11,6 +11,14 @@
 		"declaration": true,
 		"strict": true,
 		"baseUrl": "./",
+		"paths": {
+			"@dali/vscode-typescript-languageservice": [
+				"packages/vscode-typescript-languageservice/src"
+			],
+			"@dali/*": [
+				"packages/*/src"
+			]
+		},
 	},
 	"exclude": [
 		"node_modules",

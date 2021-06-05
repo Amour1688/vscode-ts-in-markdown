@@ -1,7 +1,6 @@
 {
   "name": "@dali/vscode-client",
   "version": "0.0.1",
-  "main": "./node_modules/@dali/vscode-client/out/extension",
   "files": [
     "out"
   ],

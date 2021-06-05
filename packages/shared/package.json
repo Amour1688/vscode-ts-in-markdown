@@ -6,6 +6,7 @@
     "out"
   ],
   "devDependencies": {
-    "typescript": "latest"
+    "typescript": "latest",
+    "vscode-uri": "^3.0.2"
   }
 }

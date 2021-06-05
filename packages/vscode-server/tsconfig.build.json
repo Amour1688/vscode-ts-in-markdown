@@ -9,5 +9,13 @@
 	],
 	"exclude": [
 		"node_modules",
+	],
+	"references": [
+		{
+			"path": "../shared/tsconfig.build.json"
+		},
+		{
+			"path": "../vscode-typescript-languageservice/tsconfig.build.json"
+		}
 	]
 }
