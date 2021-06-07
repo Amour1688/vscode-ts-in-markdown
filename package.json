@@ -18,7 +18,11 @@
     "onLanguage:markdown"
   ],
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.4.1",
     "@types/node": "latest",
+    "eslint": "^7.7.0",
+    "eslint-config-airbnb-typescript": "^12.3.1",
+    "eslint-plugin-import": "^2.22.1",
     "typescript": "latest"
   },
   "engines": {
