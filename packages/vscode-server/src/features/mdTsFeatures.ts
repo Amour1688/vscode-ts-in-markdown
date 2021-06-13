@@ -10,5 +10,13 @@ export function register(
 ) {
   const service = createLanguageService(ts, documents, folders);
 
-  connection.onHover((handler) => service.doHover(handler.textDocument.uri, handler.position));
+  documents.onDidChangeContent((e) => {
+    service.onDocumentUpdate(e.document);
+  });
+
+  connection.onHover((handler) => {
+    const { textDocument: { uri }, position } = handler;
+    const textDocumentPosition = service.getDocumentPosition(uri, position);
+    return service.doHover(uri, textDocumentPosition.position);
+  });
 }

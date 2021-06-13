@@ -7,6 +7,7 @@
 	],
   "dependencies": {
     "@dali/shared": "0.0.1",
+    "@textlint/markdown-to-ast": "^12.0.0",
     "fast-glob": "^3.2.5",
     "vscode-languageserver": "^7.1.0-next.4",
     "vscode-languageserver-textdocument": "^1.0.1"

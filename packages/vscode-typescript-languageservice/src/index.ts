@@ -1,37 +1,101 @@
 import type { LanguageServiceHost } from 'typescript';
-import type { TextDocument } from 'vscode-languageserver-textdocument';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as path from 'path';
-import * as fs from 'fs';
 import * as fg from 'fast-glob';
-import { fsPathToUri, uriToFsPath, normalizeFileName } from '@dali/shared';
-import type { TextDocuments } from 'vscode-languageserver/node';
+import {
+  fsPathToUri,
+  uriToFsPath,
+  normalizeFileName,
+} from '@dali/shared';
+import type { TextDocuments, Position } from 'vscode-languageserver/node';
 import * as hover from './services/hover';
+import { createSourceFile, location } from './sourceFile';
+
+export * from './sourceFile';
 
 export function createLanguageService(
   ts: typeof import('typescript/lib/tsserverlibrary'),
   documents: TextDocuments<TextDocument>,
   folders: string[],
 ) {
-  const projectVersion = 0;
-  let parsedCommandLine: ts.ParsedCommandLine;
+  let projectVersion = 0;
   const tsConfigNames = ['tsconfig.json'];
-  const tsConfigSet = new Set(folders.map((folder) => ts.sys.readDirectory(folder, tsConfigNames, undefined, ['**/*'])).flat());
+  const snapshots = new Map<string, {
+    version: string
+    snapshot: ts.IScriptSnapshot
+  }>();
+  const tsConfigSet = new Set(
+    folders
+      .map((folder) => ts.sys.readDirectory(folder, tsConfigNames, undefined, ['**/*']))
+      .flat(),
+  );
   const tsConfigs = [...tsConfigSet].filter((tsConfig) => tsConfigNames.includes(path.basename(tsConfig)));
-  parsedCommandLine = createParsedCommandLine(ts, tsConfigs[0]);
-  const mds = folders.map((folder) => fg.sync(`${folder}/components/**/*.md`)).flat();
+  let parsedCommandLine: ts.ParsedCommandLine;
+  const mds = new Map<string, { version: number, fileName: string }>();
+  const documentsMap = new Map<string, { version: number, document: TextDocument }>();
+  folders
+    .map((folder) => fg.sync(`${folder}/components/**/*.md`))
+    .flat()
+    .forEach((fileName) => {
+      mds.set(fileName, { version: 0, fileName: `${fileName}.__TS.tsx` });
+    });
+
+  update();
+
   const host = createTsLanguageServiceHost();
-  const languageService = ts.createLanguageService(host, ts.createDocumentRegistry());
+  const languageService = ts.createLanguageService(
+    host,
+    ts.createDocumentRegistry(),
+  );
 
   return {
     dispose,
     doHover: hover.register(languageService, getTextDocument, ts),
+    onDocumentUpdate,
+    getDocumentPosition,
+    update,
   };
+
+  function update() {
+    parsedCommandLine = createParsedCommandLine(
+      ts,
+      tsConfigs[0],
+    );
+
+    for (const fileName of parsedCommandLine.fileNames) {
+      if (!mds.has(fileName)) {
+        mds.set(fileName, {
+          version: 0,
+          fileName: `${fileName}.__TS.tsx`,
+        });
+      }
+    }
+  }
 
   function dispose() {
     languageService.dispose();
   }
 
+  function getDocumentPosition(uri: string, _position: Position) {
+    const fileName = `${uriToFsPath(uri)}.__TS.tsx`;
+    const res: {
+      uri: string;
+      fileName: string;
+      position: Position
+    } = {
+      uri,
+      fileName,
+      position: _position,
+    };
+    const loc = location.get(fileName);
+    if (loc?.start) {
+      res.position.line = _position.line - loc.start.line;
+    }
+    return res;
+  }
+
   function createTsLanguageServiceHost() {
+    mds.values();
     const serviceHost: LanguageServiceHost = {
       // ts
       getNewLine: () => ts.sys.newLine,
@@ -47,9 +111,9 @@ export function createLanguageService(
       getProjectVersion: () => `${projectVersion}`,
       getScriptFileNames: () => [
         ...parsedCommandLine.fileNames,
-        ...mds.map((md) => `${md}.__TS.tsx`),
+        ...([...mds.values()].map(({ fileName }) => fileName)),
       ],
-      getScriptVersion: () => '',
+      getScriptVersion,
       getCurrentDirectory: () => path.dirname(tsConfigs[0]),
       getScriptSnapshot,
       getDefaultLibFileName: (options) => ts.getDefaultLibFilePath(options),
@@ -58,15 +122,31 @@ export function createLanguageService(
   }
 
   function fileExists(_fileName: string) {
-    const fileName = normalizeFileName(ts.sys.realpath?.(_fileName) ?? _fileName);
+    const fileName = normalizeFileName(
+      ts.sys.realpath?.(_fileName) ?? _fileName,
+    );
     const exists = !!ts.sys.fileExists?.(fileName);
 
     return exists;
   }
 
+  function getScriptVersion(fileName: string) {
+    return `${mds.get(fileName)?.version || 0}`;
+  }
+
   function getScriptSnapshot(fileName: string) {
+    const version = getScriptVersion(fileName);
+    const cache = snapshots.get(fileName);
+    if (cache?.version === version) {
+      return cache.snapshot;
+    }
     const text = getScriptText(fileName);
     if (text !== undefined) {
+      const snapshot = ts.ScriptSnapshot.fromString(text);
+      snapshots.set(fileName, {
+        version: `${version}`,
+        snapshot,
+      });
       return ts.ScriptSnapshot.fromString(text);
     }
   }
@@ -80,8 +160,7 @@ export function createLanguageService(
       return ts.sys.readFile(fileName, 'utf8');
     }
     if (fileName.endsWith('.__TS.tsx')) {
-      const content = fs.readFileSync(fileName.replace('.__TS.tsx', '')).toString();
-      return content.match(/```(?:jsx|tsx)\n([\s\S]*?)```$/m)?.[1];
+      return createSourceFile(fileName);
     }
   }
 
@@ -90,18 +169,61 @@ export function createLanguageService(
     if (!languageService.getProgram()?.getSourceFile(fileName)) {
       return;
     }
-    return documents.get(uri);
+    const version = host.getScriptVersion(fileName);
+    const prev = documentsMap.get(fileName);
+    if (prev?.version !== Number(version)) {
+      const scriptSnapshot = host.getScriptSnapshot(fileName);
+      if (scriptSnapshot) {
+        const scriptText = scriptSnapshot.getText(0, scriptSnapshot.getLength());
+        const newVersion = prev?.version ? prev.version + 1 : 0;
+        const document = TextDocument.create(uri, 'typescript', newVersion, scriptText);
+        documentsMap.set(fileName, {
+          version: newVersion,
+          document,
+        });
+      }
+    }
+    return documentsMap.get(fileName)?.document;
+  }
+
+  function onDocumentUpdate(document: TextDocument) {
+    const fileName = uriToFsPath(document.uri);
+    const snapshot = snapshots.get(fileName);
+    if (snapshot) {
+      const snapshotLength = snapshot.snapshot.getLength();
+      const documentText = createSourceFile(fileName);
+      if (
+        snapshotLength === documentText.length
+        && snapshot.snapshot.getText(0, snapshotLength) === documentText
+      ) {
+        return;
+      }
+    }
+    const md = mds.get(fileName);
+    if (md) {
+      md.version++;
+      projectVersion++;
+    }
   }
 }
 
-function createParsedCommandLine(ts: typeof import('typescript/lib/tsserverlibrary'), tsConfig: string) {
+function createParsedCommandLine(
+  ts: typeof import('typescript/lib/tsserverlibrary'),
+  tsConfig: string,
+) {
   const parseConfigHost: ts.ParseConfigHost = {
     ...ts.sys,
     readDirectory: ts.sys.readDirectory,
   };
   const realTsConfig = ts.sys.realpath!(tsConfig);
   const config = ts.readJsonConfigFile(realTsConfig, ts.sys.readFile);
-  const content = ts.parseJsonSourceFileConfigFileContent(config, parseConfigHost, path.dirname(realTsConfig), {}, path.basename(realTsConfig));
+  const content = ts.parseJsonSourceFileConfigFileContent(
+    config,
+    parseConfigHost,
+    path.dirname(realTsConfig),
+    {},
+    path.basename(realTsConfig),
+  );
   content.options.outDir = undefined;
   content.fileNames = content.fileNames.map(normalizeFileName);
   return content;

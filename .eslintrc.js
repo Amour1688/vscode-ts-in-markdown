@@ -19,6 +19,8 @@ module.exports = {
     'import/prefer-default-export': [0],
     '@typescript-eslint/no-use-before-define': [0],
     'max-len': [0],
-    'consistent-return': [0]
+    'consistent-return': [0],
+    'no-plusplus': [0],
+    'no-restricted-syntax': [0]
   }
 };

@@ -5,15 +5,20 @@ import {
 } from 'vscode-languageserver/node';
 import type {
   Hover,
-  // Position,
+  Position,
 } from 'vscode-languageserver/node';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 
 export function register(languageService: ts.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined, ts: typeof import('typescript')) {
-  return (uri: string): Hover | undefined => {
-    // const document = getTextDocument(uri);
+  return (uri: string, position: Position): Hover | undefined => {
+    const document = getTextDocument(`${uri}.__TS.tsx`);
+    if (!document) {
+      return;
+    }
+
+    const offset = document.offsetAt(position);
     const fileName = uriToFsPath(uri);
-    const info = languageService.getQuickInfoAtPosition(`${fileName}.__TS.tsx`, 10);
+    const info = languageService.getQuickInfoAtPosition(`${fileName}.__TS.tsx`, offset);
     if (!info) {
       return;
     }
