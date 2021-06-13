@@ -9,9 +9,12 @@ import {
 } from '@dali/shared';
 import type { TextDocuments, Position } from 'vscode-languageserver/node';
 import * as hover from './services/hover';
+import * as definitions from './services/definitions';
 import { createSourceFile, location } from './sourceFile';
 
 export * from './sourceFile';
+
+// export type LanguageService = ReturnType<typeof createLanguageService>;
 
 export function createLanguageService(
   ts: typeof import('typescript/lib/tsserverlibrary'),
@@ -51,6 +54,7 @@ export function createLanguageService(
   return {
     dispose,
     doHover: hover.register(languageService, getTextDocument, ts),
+    fineDefinitions: definitions.register(languageService, getTextDocument),
     onDocumentUpdate,
     getDocumentPosition,
     update,

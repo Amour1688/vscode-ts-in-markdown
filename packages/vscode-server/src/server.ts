@@ -34,6 +34,7 @@ function onInitialize(params: InitializeParams) {
       completionProvider: {
         resolveProvider: true,
       },
+      definitionProvider: true,
       hoverProvider: true,
     },
   };

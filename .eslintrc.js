@@ -21,6 +21,7 @@ module.exports = {
     'max-len': [0],
     'consistent-return': [0],
     'no-plusplus': [0],
-    'no-restricted-syntax': [0]
+    'no-restricted-syntax': [0],
+    'import/no-extraneous-dependencies': [0]
   }
 };

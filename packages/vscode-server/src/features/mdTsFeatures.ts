@@ -14,6 +14,12 @@ export function register(
     service.onDocumentUpdate(e.document);
   });
 
+  connection.onDefinition((handler) => {
+    const { textDocument: { uri }, position } = handler;
+    const textDocumentPosition = service.getDocumentPosition(uri, position);
+    return service.fineDefinitions(uri, textDocumentPosition.position);
+  });
+
   connection.onHover((handler) => {
     const { textDocument: { uri }, position } = handler;
     const textDocumentPosition = service.getDocumentPosition(uri, position);
