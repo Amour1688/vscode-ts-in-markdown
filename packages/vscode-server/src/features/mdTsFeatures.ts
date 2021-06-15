@@ -14,15 +14,21 @@ export function register(
     service.onDocumentUpdate(e.document);
   });
 
+  connection.onCompletion((handler) => {
+    const { textDocument: { uri }, position, context } = handler;
+    const documentInfo = service.getVirtualDocumentInfo(uri, position);
+    return service.doCompletion(uri, documentInfo.position, context);
+  });
+
   connection.onDefinition((handler) => {
     const { textDocument: { uri }, position } = handler;
-    const textDocumentPosition = service.getDocumentPosition(uri, position);
-    return service.fineDefinitions(uri, textDocumentPosition.position);
+    const documentInfo = service.getVirtualDocumentInfo(uri, position);
+    return service.findDefinitions(uri, documentInfo.position);
   });
 
   connection.onHover((handler) => {
     const { textDocument: { uri }, position } = handler;
-    const textDocumentPosition = service.getDocumentPosition(uri, position);
-    return service.doHover(uri, textDocumentPosition.position);
+    const documentInfo = service.getVirtualDocumentInfo(uri, position);
+    return service.doHover(uri, documentInfo.position);
   });
 }

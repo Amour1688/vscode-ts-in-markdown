@@ -24,22 +24,22 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
     }
 
     const locationLinks: LocationLink[] = [];
-    const originSelectionRange = Range.create(
-      document.positionAt(body.textSpan.start),
-      document.positionAt(body.textSpan.start + body.textSpan.length),
-    );
+    const originSelectionRange: Range = {
+      start: document.positionAt(body.textSpan.start),
+      end: document.positionAt(body.textSpan.start + body.textSpan.length),
+    };
     for (const location of body.definitions) {
       const locationUri = fsPathToUri(location.fileName);
       const doc = getTextDocument(locationUri);
       if (doc && locationUri !== tsxUri) {
-        const targetSelectionRange = Range.create(
-          doc.positionAt(location.textSpan.start),
-          doc.positionAt(location.textSpan.start + location.textSpan.length),
-        );
-        const targetRange = location.contextSpan ? Range.create(
-          doc.positionAt(location.contextSpan.start),
-          doc.positionAt(location.contextSpan.start + location.contextSpan.length),
-        ) : targetSelectionRange;
+        const targetSelectionRange: Range = {
+          start: doc.positionAt(location.textSpan.start),
+          end: doc.positionAt(location.textSpan.start + location.textSpan.length),
+        };
+        const targetRange: Range = location.contextSpan ? {
+          start: doc.positionAt(location.contextSpan.start),
+          end: doc.positionAt(location.contextSpan.start + location.contextSpan.length),
+        } : targetSelectionRange;
 
         locationLinks.push({
           originSelectionRange,

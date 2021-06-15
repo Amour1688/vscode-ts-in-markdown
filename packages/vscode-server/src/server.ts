@@ -1,10 +1,17 @@
 import {
-  createConnection, ProposedFeatures, TextDocumentSyncKind, TextDocuments,
+  createConnection,
+  ProposedFeatures,
+  TextDocumentSyncKind,
+  TextDocuments,
+  DidChangeConfigurationNotification,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import type { ServerInitializationOptions } from '@dali/shared';
 import { loadTypeScript, uriToFsPath } from '@dali/shared';
-import type { InitializeResult, InitializeParams } from 'vscode-languageserver/node';
+import type {
+  InitializeResult,
+  InitializeParams,
+} from 'vscode-languageserver/node';
 import { register as registerApiFeatures } from './registers/registerApiFeatures';
 import { register as registerMdTsFeatures } from './features/mdTsFeatures';
 
@@ -30,12 +37,9 @@ function onInitialize(params: InitializeParams) {
   const result: InitializeResult = {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
-      // Tell the client that this server supports code completion.
       completionProvider: {
         resolveProvider: true,
       },
-      definitionProvider: true,
-      hoverProvider: true,
     },
   };
 
@@ -43,7 +47,16 @@ function onInitialize(params: InitializeParams) {
 }
 
 async function onInitialized() {
-  registerApiFeatures(connection, loadTypeScript(options.appRoot));
+  registerApiFeatures(connection);
 
-  registerMdTsFeatures(connection, loadTypeScript(options.appRoot), documents, folders);
+  registerMdTsFeatures(
+    connection,
+    loadTypeScript(options.appRoot),
+    documents,
+    folders,
+  );
+  connection.client.register(
+    DidChangeConfigurationNotification.type,
+    undefined,
+  );
 }

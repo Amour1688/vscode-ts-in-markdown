@@ -11,6 +11,10 @@
   "workspaces": [
     "packages/*"
   ],
+  "keywords": [
+    "markdown",
+    "typescript"
+  ],
   "scripts": {
     "watch": "tsc -b tsconfig.build.json -w"
   },

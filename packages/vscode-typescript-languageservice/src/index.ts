@@ -6,10 +6,12 @@ import {
   fsPathToUri,
   uriToFsPath,
   normalizeFileName,
+  toVirtualPath,
 } from '@dali/shared';
 import type { TextDocuments, Position } from 'vscode-languageserver/node';
-import * as hover from './services/hover';
-import * as definitions from './services/definitions';
+import * as hover from './languageFeatures/hover';
+import * as definitions from './languageFeatures/definitions';
+import * as completions from './languageFeatures/completions';
 import { createSourceFile, location } from './sourceFile';
 
 export * from './sourceFile';
@@ -40,7 +42,7 @@ export function createLanguageService(
     .map((folder) => fg.sync(`${folder}/components/**/*.md`))
     .flat()
     .forEach((fileName) => {
-      mds.set(fileName, { version: 0, fileName: `${fileName}.__TS.tsx` });
+      mds.set(fileName, { version: 0, fileName: toVirtualPath(fileName) });
     });
 
   update();
@@ -54,9 +56,10 @@ export function createLanguageService(
   return {
     dispose,
     doHover: hover.register(languageService, getTextDocument, ts),
-    fineDefinitions: definitions.register(languageService, getTextDocument),
+    doCompletion: completions.register(languageService, getTextDocument),
+    findDefinitions: definitions.register(languageService, getTextDocument),
     onDocumentUpdate,
-    getDocumentPosition,
+    getVirtualDocumentInfo,
     update,
   };
 
@@ -70,7 +73,7 @@ export function createLanguageService(
       if (!mds.has(fileName)) {
         mds.set(fileName, {
           version: 0,
-          fileName: `${fileName}.__TS.tsx`,
+          fileName: toVirtualPath(fileName),
         });
       }
     }
@@ -80,8 +83,8 @@ export function createLanguageService(
     languageService.dispose();
   }
 
-  function getDocumentPosition(uri: string, _position: Position) {
-    const fileName = `${uriToFsPath(uri)}.__TS.tsx`;
+  function getVirtualDocumentInfo(uri: string, _position: Position) {
+    const fileName = toVirtualPath(uriToFsPath(uri));
     const res: {
       uri: string;
       fileName: string;

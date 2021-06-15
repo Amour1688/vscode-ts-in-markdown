@@ -21,3 +21,7 @@ export function fsPathToUri(fsPath: string) {
 export function normalizeFileName(fileName: string) {
   return uriToFsPath(fsPathToUri(fileName));
 }
+
+export function toVirtualPath(fileName: string) {
+  return `${fileName}.__TS.tsx`;
+}

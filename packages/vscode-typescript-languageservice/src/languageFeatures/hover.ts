@@ -1,4 +1,4 @@
-import { uriToFsPath } from '@dali/shared';
+import { uriToFsPath, toVirtualPath } from '@dali/shared';
 import {
   MarkupContent,
   MarkupKind,
@@ -13,14 +13,14 @@ import { markdownDocumentation } from '../utils/previewer';
 
 export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined, ts: typeof import('typescript')) {
   return (uri: string, position: Position): Hover | undefined => {
-    const document = getTextDocument(`${uri}.__TS.tsx`);
+    const document = getTextDocument(toVirtualPath(uri));
     if (!document) {
       return;
     }
 
     const offset = document.offsetAt(position);
     const fileName = uriToFsPath(uri);
-    const info = languageService.getQuickInfoAtPosition(`${fileName}.__TS.tsx`, offset);
+    const info = languageService.getQuickInfoAtPosition(toVirtualPath(fileName), offset);
     if (!info) {
       return;
     }

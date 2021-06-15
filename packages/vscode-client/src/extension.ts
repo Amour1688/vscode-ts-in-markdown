@@ -6,7 +6,9 @@ import type { ServerInitializationOptions } from '@dali/shared';
 let client: lsp.LanguageClient;
 
 export async function activate(context: vscode.ExtensionContext) {
-  const serverModule = context.asAbsolutePath(path.join('node_modules', '@dali', 'vscode-server', 'out', 'server.js'));
+  const serverModule = context.asAbsolutePath(
+    path.join('node_modules', '@dali', 'vscode-server', 'out', 'server.js'),
+  );
   const debugOptions = { execArgv: ['--nolazy', '--inspect=6009'] };
 
   const serverOptions: lsp.ServerOptions = {
@@ -33,7 +35,7 @@ export async function activate(context: vscode.ExtensionContext) {
     serverOptions,
     clientOptions,
   );
-  context.subscriptions.push(client.start());
+  client.start();
 
   return client;
 }

@@ -1,11 +1,24 @@
-import type { Connection, TextDocumentRegistrationOptions } from 'vscode-languageserver/node'
-import { HoverRequest } from 'vscode-languageserver/node'
-import { createLanguageService } from '@dali/vscode-typescript-languageservice'
+import {
+  HoverRequest,
+  DefinitionRequest,
+  Connection,
+  TypeDefinitionRequest,
+  // CompletionRequest,
+  TextDocumentRegistrationOptions,
+} from 'vscode-languageserver/node';
 
-export function register(connect: Connection, ts: typeof import('typescript/lib/tsserverlibrary')) {
-  connect.client.register(HoverRequest.type, {
-    documentSelector: [
-      { scheme: 'file', language: 'markdown' },
-  ],
-  } as TextDocumentRegistrationOptions)
+const markdownReg: TextDocumentRegistrationOptions = {
+  documentSelector: [{ scheme: 'file', language: 'markdown' }],
+};
+
+export function register(connect: Connection) {
+  connect.client.register(DefinitionRequest.type, markdownReg);
+  connect.client.register(TypeDefinitionRequest.type, markdownReg);
+  connect.client.register(TypeDefinitionRequest.type, markdownReg);
+  connect.client.register(HoverRequest.type, markdownReg);
+  // connect.client.register(CompletionRequest.type, {
+  //   documentSelector: markdownReg.documentSelector,
+  //   triggerCharacters: ['.', '\'', '"', '`'],
+  //   resolveProvider: true,
+  // });
 }
