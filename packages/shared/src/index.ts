@@ -25,3 +25,7 @@ export function normalizeFileName(fileName: string) {
 export function toVirtualPath(fileName: string) {
   return `${fileName}.__TS.tsx`;
 }
+
+export function toRealFilePath(fileName: string) {
+  return fileName.replace('.__TS.tsx', '');
+}

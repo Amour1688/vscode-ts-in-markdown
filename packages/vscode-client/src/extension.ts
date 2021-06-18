@@ -25,7 +25,13 @@ export async function activate(context: vscode.ExtensionContext) {
   };
 
   const clientOptions: lsp.LanguageClientOptions = {
-    documentSelector: [{ scheme: 'file', language: 'markdown' }],
+    documentSelector: [
+      { scheme: 'file', language: 'markdown' },
+      { scheme: 'file', language: 'typescript' },
+      { scheme: 'file', language: 'typescriptreact' },
+      { scheme: 'file', language: 'javascript' },
+      { scheme: 'file', language: 'javascriptreact' },
+    ],
     initializationOptions: serverInitOptions,
   };
 

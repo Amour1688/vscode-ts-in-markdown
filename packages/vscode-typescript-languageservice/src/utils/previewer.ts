@@ -189,7 +189,12 @@ export function markdownDocumentation(
   documentation: Proto.SymbolDisplayPart[] | string | undefined,
   tags: Proto.JSDocTagInfo[] | undefined,
 ): string {
-  return addMarkdownDocumentation('', documentation, tags);
+  const newTags: Proto.JSDocTagInfo[] | undefined = tags?.map((tag) => ({
+    name: tag.name,
+    // TODO
+    text: (tag.text as any).map?.(({ text }: any) => text).join('') ?? tag.text,
+  }));
+  return addMarkdownDocumentation('', documentation, newTags);
 }
 
 export function addMarkdownDocumentation(

@@ -20,6 +20,8 @@ export function register(
     return service.doCompletion(uri, documentInfo.position, context);
   });
 
+  connection.onCompletionResolve((item) => service.doCompletionResolve(item));
+
   connection.onDefinition((handler) => {
     const { textDocument: { uri }, position } = handler;
     const documentInfo = service.getVirtualDocumentInfo(uri, position);

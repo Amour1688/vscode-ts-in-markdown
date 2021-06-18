@@ -7,11 +7,13 @@ import {
   uriToFsPath,
   normalizeFileName,
   toVirtualPath,
+  toRealFilePath,
 } from '@dali/shared';
 import type { TextDocuments, Position } from 'vscode-languageserver/node';
 import * as hover from './languageFeatures/hover';
 import * as definitions from './languageFeatures/definitions';
 import * as completions from './languageFeatures/completions';
+import * as completionResolve from './languageFeatures/completionResolve';
 import { createSourceFile, location } from './sourceFile';
 
 export * from './sourceFile';
@@ -57,6 +59,7 @@ export function createLanguageService(
     dispose,
     doHover: hover.register(languageService, getTextDocument, ts),
     doCompletion: completions.register(languageService, getTextDocument),
+    doCompletionResolve: completionResolve.register(languageService, getTextDocument),
     findDefinitions: definitions.register(languageService, getTextDocument),
     onDocumentUpdate,
     getVirtualDocumentInfo,
@@ -102,7 +105,6 @@ export function createLanguageService(
   }
 
   function createTsLanguageServiceHost() {
-    mds.values();
     const serviceHost: LanguageServiceHost = {
       // ts
       getNewLine: () => ts.sys.newLine,
@@ -138,7 +140,8 @@ export function createLanguageService(
   }
 
   function getScriptVersion(fileName: string) {
-    return `${mds.get(fileName)?.version || 0}`;
+    const realPath = toRealFilePath(fileName);
+    return mds.has(realPath) ? `${mds.get(toRealFilePath(fileName))?.version || 0}` : '0';
   }
 
   function getScriptSnapshot(fileName: string) {
@@ -159,15 +162,12 @@ export function createLanguageService(
   }
 
   function getScriptText(fileName: string) {
-    const doc = documents.get(fsPathToUri(fileName));
+    const doc = documents.get(fsPathToUri(toRealFilePath(fileName)));
     if (doc) {
-      return doc.getText();
+      return fileName.endsWith('.__TS.tsx') ? createSourceFile(fileName, doc.getText()) : doc.getText();
     }
     if (ts.sys.fileExists(fileName)) {
       return ts.sys.readFile(fileName, 'utf8');
-    }
-    if (fileName.endsWith('.__TS.tsx')) {
-      return createSourceFile(fileName);
     }
   }
 
@@ -194,11 +194,13 @@ export function createLanguageService(
   }
 
   function onDocumentUpdate(document: TextDocument) {
-    const fileName = uriToFsPath(document.uri);
+    const fsPath = uriToFsPath(document.uri);
+    const isMarkdown = mds.has(fsPath);
+    const fileName = isMarkdown ? toVirtualPath(fsPath) : fsPath;
     const snapshot = snapshots.get(fileName);
     if (snapshot) {
       const snapshotLength = snapshot.snapshot.getLength();
-      const documentText = createSourceFile(fileName);
+      const documentText = isMarkdown ? createSourceFile(fileName, document.getText()) : document.getText();
       if (
         snapshotLength === documentText.length
         && snapshot.snapshot.getText(0, snapshotLength) === documentText
@@ -206,7 +208,7 @@ export function createLanguageService(
         return;
       }
     }
-    const md = mds.get(fileName);
+    const md = mds.get(fsPath);
     if (md) {
       md.version++;
       projectVersion++;

@@ -1,16 +1,11 @@
-import * as fs from 'fs';
 import { parse, SourceLocation } from '@dali/shared';
 
 const location = new Map<string, SourceLocation>();
 
-export function createSourceFile(fileName: string) {
-  const { source = '', ...rest } = parse(
-    fs.readFileSync(fileName.replace('.__TS.tsx', '')).toString(),
-  );
+export function createSourceFile(fileName: string, content: string) {
+  const { source = '', ...rest } = parse(content);
   location.set(fileName, rest);
   return source;
 }
 
-export {
-  location,
-};
+export { location };
