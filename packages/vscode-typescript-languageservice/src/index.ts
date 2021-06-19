@@ -39,12 +39,16 @@ export function createLanguageService(
   const tsConfigs = [...tsConfigSet].filter((tsConfig) => tsConfigNames.includes(path.basename(tsConfig)));
   let parsedCommandLine: ts.ParsedCommandLine;
   const mds = new Map<string, { version: number, fileName: string }>();
+  const virtualMap = new Map<string, string>();
+  const tsFiles = new Map<string, { version: number; fileName: string }>();
   const documentsMap = new Map<string, { version: number, document: TextDocument }>();
   folders
     .map((folder) => fg.sync(`${folder}/components/**/*.md`))
     .flat()
     .forEach((fileName) => {
-      mds.set(fileName, { version: 0, fileName: toVirtualPath(fileName) });
+      const virtualName = toVirtualPath(fileName);
+      mds.set(fileName, { version: 0, fileName: virtualName });
+      virtualMap.set(virtualName, fileName);
     });
 
   update();
@@ -73,10 +77,10 @@ export function createLanguageService(
     );
 
     for (const fileName of parsedCommandLine.fileNames) {
-      if (!mds.has(fileName)) {
-        mds.set(fileName, {
+      if (!tsFiles.has(fileName)) {
+        tsFiles.set(fileName, {
           version: 0,
-          fileName: toVirtualPath(fileName),
+          fileName,
         });
       }
     }
@@ -140,8 +144,8 @@ export function createLanguageService(
   }
 
   function getScriptVersion(fileName: string) {
-    const realPath = toRealFilePath(fileName);
-    return mds.has(realPath) ? `${mds.get(toRealFilePath(fileName))?.version || 0}` : '0';
+    const virtual = virtualMap.get(fileName);
+    return `${virtual ? mds.get(virtual)?.version : tsFiles.get(fileName)?.version || 0}`;
   }
 
   function getScriptSnapshot(fileName: string) {
@@ -164,7 +168,7 @@ export function createLanguageService(
   function getScriptText(fileName: string) {
     const doc = documents.get(fsPathToUri(toRealFilePath(fileName)));
     if (doc) {
-      return fileName.endsWith('.__TS.tsx') ? createSourceFile(fileName, doc.getText()) : doc.getText();
+      return virtualMap.has(fileName) ? createSourceFile(fileName, doc.getText()) : doc.getText();
     }
     if (ts.sys.fileExists(fileName)) {
       return ts.sys.readFile(fileName, 'utf8');
@@ -195,12 +199,12 @@ export function createLanguageService(
 
   function onDocumentUpdate(document: TextDocument) {
     const fsPath = uriToFsPath(document.uri);
-    const isMarkdown = mds.has(fsPath);
-    const fileName = isMarkdown ? toVirtualPath(fsPath) : fsPath;
+    const markdown = mds.get(fsPath);
+    const fileName = markdown ? markdown.fileName : fsPath;
     const snapshot = snapshots.get(fileName);
     if (snapshot) {
       const snapshotLength = snapshot.snapshot.getLength();
-      const documentText = isMarkdown ? createSourceFile(fileName, document.getText()) : document.getText();
+      const documentText = markdown ? createSourceFile(fileName, document.getText()) : document.getText();
       if (
         snapshotLength === documentText.length
         && snapshot.snapshot.getText(0, snapshotLength) === documentText
@@ -208,9 +212,9 @@ export function createLanguageService(
         return;
       }
     }
-    const md = mds.get(fsPath);
-    if (md) {
-      md.version++;
+    const file = markdown ?? tsFiles.get(fsPath);
+    if (file) {
+      file.version++;
       projectVersion++;
     }
   }
