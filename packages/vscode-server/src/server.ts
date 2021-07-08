@@ -6,8 +6,8 @@ import {
   DidChangeConfigurationNotification,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import type { ServerInitializationOptions } from '@dali/shared';
-import { loadTypeScript, uriToFsPath } from '@dali/shared';
+import type { ServerInitializationOptions } from '@ts-in-markdown/shared';
+import { loadTypeScript, uriToFsPath } from '@ts-in-markdown/shared';
 import type {
   InitializeResult,
   InitializeParams,

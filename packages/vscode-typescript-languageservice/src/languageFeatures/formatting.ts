@@ -3,7 +3,7 @@ import {
   Position,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uriToFsPath } from '@dali/shared';
+import { uriToFsPath } from '@ts-in-markdown/shared';
 
 export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
   return (uri: string, position: Position) => {

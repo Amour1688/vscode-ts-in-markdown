@@ -1,11 +1,11 @@
 {
-  "name": "@dali/vscode-client",
+  "name": "@ts-in-markdown/vscode-client",
   "version": "0.0.1",
   "files": [
     "out"
   ],
   "dependencies": {
-    "@dali/shared": "^0.0.1",
+    "@ts-in-markdown/shared": "^0.0.1",
     "vscode-languageclient": "^7.1.0-next.4"
   },
   "devDependencies": {

@@ -12,10 +12,10 @@
 		"strict": true,
 		"baseUrl": "./",
 		"paths": {
-			"@dali/vscode-typescript-languageservice": [
+			"@ts-in-markdown/vscode-typescript-languageservice": [
 				"packages/vscode-typescript-languageservice/src"
 			],
-			"@dali/*": [
+			"@ts-in-markdown/*": [
 				"packages/*/src"
 			]
 		},

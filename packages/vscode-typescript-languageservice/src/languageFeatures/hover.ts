@@ -1,4 +1,4 @@
-import { uriToFsPath, toVirtualPath } from '@dali/shared';
+import { uriToFsPath, toVirtualPath } from '@ts-in-markdown/shared';
 import {
   MarkupContent,
   MarkupKind,

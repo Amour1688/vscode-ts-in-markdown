@@ -1,4 +1,4 @@
-import { parse, SourceLocation } from '@dali/shared';
+import { parse, SourceLocation } from '@ts-in-markdown/shared';
 
 const location = new Map<string, SourceLocation>(); // virtual path
 

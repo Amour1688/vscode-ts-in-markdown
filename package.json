@@ -1,33 +1,37 @@
 {
-  "name": "dali",
-  "displayName": "dali",
+  "name": "ts-in-markdown",
+  "displayName": "TS in Markdown",
+  "publisher": "Amour1688",
   "version": "0.0.1",
   "private": true,
   "description": "Language support for TS in markdown",
   "categories": [
     "Programming Languages"
   ],
-  "main": "./node_modules/@dali/vscode-client/out/extension",
-  "workspaces": [
-    "packages/*"
-  ],
   "keywords": [
     "markdown",
     "typescript"
   ],
+  "main": "./node_modules/@ts-in-markdown/vscode-client/out/extension",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "watch": "tsc -b tsconfig.build.json -w"
+    "compile": "tsc -b tsconfig.build.json",
+    "watch": "tsc -b tsconfig.build.json -w",
+    "package": "vsce package --yarn"
   },
   "activationEvents": [
     "onLanguage:markdown"
   ],
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^4.4.1",
     "@types/node": "latest",
+    "@typescript-eslint/eslint-plugin": "^4.4.1",
     "eslint": "^7.7.0",
     "eslint-config-airbnb-typescript": "^12.3.1",
     "eslint-plugin-import": "^2.22.1",
-    "typescript": "latest"
+    "typescript": "latest",
+    "vsce": "latest"
   },
   "engines": {
     "vscode": "^1.52.0"

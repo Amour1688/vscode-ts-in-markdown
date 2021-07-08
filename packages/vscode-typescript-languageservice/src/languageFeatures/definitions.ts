@@ -5,7 +5,7 @@ import {
   LocationLink,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uriToFsPath, fsPathToUri } from '@dali/shared';
+import { uriToFsPath, fsPathToUri } from '@ts-in-markdown/shared';
 
 export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
   return (uri: string, position: Position): LocationLink[] => {

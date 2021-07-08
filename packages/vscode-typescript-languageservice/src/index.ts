@@ -8,7 +8,7 @@ import {
   normalizeFileName,
   toVirtualPath,
   toRealFilePath,
-} from '@dali/shared';
+} from '@ts-in-markdown/shared';
 import type { TextDocuments, Position } from 'vscode-languageserver/node';
 import * as hover from './languageFeatures/hover';
 import * as definitions from './languageFeatures/definitions';

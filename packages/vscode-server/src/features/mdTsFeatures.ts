@@ -1,5 +1,5 @@
 import type { Connection, TextDocuments } from 'vscode-languageserver/node';
-import { createLanguageService } from '@dali/vscode-typescript-languageservice';
+import { createLanguageService } from '@ts-in-markdown/vscode-typescript-languageservice';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
 
 export function register(

@@ -1,7 +1,3 @@
-# Dali README
+# TS in Markdown
 
-This is the README for your extension "dali".
-
-## Features
-
-Language support for TS in markdown
+> ⚡ Language support for TypeScript in markdown

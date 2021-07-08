@@ -10,7 +10,7 @@ import {
   TextEdit,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uriToFsPath, toVirtualPath } from '@dali/shared';
+import { uriToFsPath, toVirtualPath } from '@ts-in-markdown/shared';
 import { parseKindModifier } from '../utils/modifiers';
 import * as PConst from '../protocol.const';
 
@@ -55,7 +55,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
     //   end: document.positionAt(optionalReplacementSpan.start + optionalReplacementSpan.length),
     // } : undefined;
 
-    const entries: CompletionItem[] = body.entries?.map((entry) => {
+    const entries: CompletionItem[] = body.entries.map((entry) => {
       let item: CompletionItem = {
         label: entry.name,
         kind: convertKind(entry.kind),
