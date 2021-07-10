@@ -14,6 +14,9 @@ import * as hover from './languageFeatures/hover';
 import * as definitions from './languageFeatures/definitions';
 import * as completions from './languageFeatures/completions';
 import * as completionResolve from './languageFeatures/completionResolve';
+import * as typeDefinition from './languageFeatures/typeDefinition';
+import * as formatting from './languageFeatures/formatting';
+import * as references from './languageFeatures/references';
 import { createSourceFile, location } from './sourceFile';
 
 export * from './sourceFile';
@@ -64,7 +67,10 @@ export function createLanguageService(
     doHover: hover.register(languageService, getTextDocument, ts),
     doCompletion: completions.register(languageService, getTextDocument),
     doCompletionResolve: completionResolve.register(languageService, getTextDocument),
+    doFormatting: formatting.register(languageService, getTextDocument),
+    fineTypeDefinition: typeDefinition.register(languageService, getTextDocument),
     findDefinitions: definitions.register(languageService, getTextDocument),
+    findReferences: references.register(languageService, getTextDocument),
     onDocumentUpdate,
     getVirtualDocumentInfo,
     update,

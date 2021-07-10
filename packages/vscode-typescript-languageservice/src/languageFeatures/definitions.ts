@@ -5,11 +5,11 @@ import {
   LocationLink,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uriToFsPath, fsPathToUri } from '@ts-in-markdown/shared';
+import { uriToFsPath, fsPathToUri, toVirtualPath } from '@ts-in-markdown/shared';
 
 export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
   return (uri: string, position: Position): LocationLink[] => {
-    const tsxUri = `${uri}.__TS.tsx`;
+    const tsxUri = toVirtualPath(uri);
     const document = getTextDocument(tsxUri);
     if (!document) {
       return [];
@@ -17,7 +17,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
 
     const offset = document.offsetAt(position);
     const fileName = uriToFsPath(uri);
-    const body = languageService.getDefinitionAndBoundSpan(`${fileName}.__TS.tsx`, offset);
+    const body = languageService.getDefinitionAndBoundSpan(toVirtualPath(fileName), offset);
 
     if (!body || !body.definitions) {
       return [];

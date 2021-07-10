@@ -1,24 +1,38 @@
 import * as TS from 'typescript';
 import {
-  Position,
+  FormattingOptions,
+  TextEdit,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uriToFsPath } from '@ts-in-markdown/shared';
+import { uriToFsPath, toVirtualPath } from '@ts-in-markdown/shared';
 
 export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
-  return (uri: string, position: Position) => {
-    const tsxUri = `${uri}.__TS.tsx`;
+  return (uri: string, options: FormattingOptions): TextEdit[] => {
+    const tsxUri = toVirtualPath(uri);
     const document = getTextDocument(tsxUri);
     if (!document) {
       return [];
     }
 
-    const offset = document.offsetAt(position);
     const fileName = uriToFsPath(uri);
-    const body = languageService.getCompletionsAtPosition(fileName, offset, {});
 
-    if (!body) {
-      return [];
+    const tsOptions: TS.FormatCodeSettings = {
+      ...options,
+    };
+
+    const edits = languageService.getFormattingEditsForDocument(fileName, tsOptions);
+    const result: TextEdit[] = [];
+
+    for (const edit of edits) {
+      result.push({
+        range: {
+          start: document.positionAt(edit.span.start),
+          end: document.positionAt(edit.span.start + edit.span.length),
+        },
+        newText: edit.newText,
+      });
     }
+
+    return result;
   };
 }
