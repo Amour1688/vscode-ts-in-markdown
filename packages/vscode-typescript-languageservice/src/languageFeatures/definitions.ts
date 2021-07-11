@@ -16,8 +16,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
     }
 
     const offset = document.offsetAt(position);
-    const fileName = uriToFsPath(uri);
-    const body = languageService.getDefinitionAndBoundSpan(toVirtualPath(fileName), offset);
+    const body = languageService.getDefinitionAndBoundSpan(toVirtualPath(uriToFsPath(uri)), offset);
 
     if (!body || !body.definitions) {
       return [];

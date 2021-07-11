@@ -14,13 +14,11 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
       return [];
     }
 
-    const fileName = uriToFsPath(uri);
-
     const tsOptions: TS.FormatCodeSettings = {
       ...options,
     };
 
-    const edits = languageService.getFormattingEditsForDocument(fileName, tsOptions);
+    const edits = languageService.getFormattingEditsForDocument(uriToFsPath(uri), tsOptions);
     const result: TextEdit[] = [];
 
     for (const edit of edits) {

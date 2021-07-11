@@ -1,4 +1,4 @@
-import type { LanguageServiceHost } from 'typescript';
+import { LanguageServiceHost } from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as path from 'path';
 import * as fg from 'fast-glob';
@@ -9,19 +9,18 @@ import {
   toVirtualPath,
   toRealFilePath,
 } from '@ts-in-markdown/shared';
-import type { TextDocuments, Position } from 'vscode-languageserver/node';
+import { TextDocuments } from 'vscode-languageserver/node';
 import * as hover from './languageFeatures/hover';
 import * as definitions from './languageFeatures/definitions';
 import * as completions from './languageFeatures/completions';
 import * as completionResolve from './languageFeatures/completionResolve';
 import * as typeDefinition from './languageFeatures/typeDefinition';
 import * as formatting from './languageFeatures/formatting';
+import * as folding from './languageFeatures/folding';
 import * as references from './languageFeatures/references';
-import { createSourceFile, location } from './sourceFile';
+import { parseSourceFile } from './sourceFile';
 
 export * from './sourceFile';
-
-// export type LanguageService = ReturnType<typeof createLanguageService>;
 
 export function createLanguageService(
   ts: typeof import('typescript/lib/tsserverlibrary'),
@@ -41,18 +40,10 @@ export function createLanguageService(
   );
   const tsConfigs = [...tsConfigSet].filter((tsConfig) => tsConfigNames.includes(path.basename(tsConfig)));
   let parsedCommandLine: ts.ParsedCommandLine;
-  const mds = new Map<string, { version: number, fileName: string }>();
+  const mdMap = new Map<string, { version: number, fileName: string }>();
   const virtualMap = new Map<string, string>();
   const tsFiles = new Map<string, { version: number; fileName: string }>();
   const documentsMap = new Map<string, { version: number, document: TextDocument }>();
-  folders
-    .map((folder) => fg.sync(`${folder}/components/**/*.md`))
-    .flat()
-    .forEach((fileName) => {
-      const virtualName = toVirtualPath(fileName);
-      mds.set(fileName, { version: 0, fileName: virtualName });
-      virtualMap.set(virtualName, fileName);
-    });
 
   update();
 
@@ -68,15 +59,29 @@ export function createLanguageService(
     doCompletion: completions.register(languageService, getTextDocument),
     doCompletionResolve: completionResolve.register(languageService, getTextDocument),
     doFormatting: formatting.register(languageService, getTextDocument),
+    doFolding: folding.register(languageService, getTextDocument),
     fineTypeDefinition: typeDefinition.register(languageService, getTextDocument),
     findDefinitions: definitions.register(languageService, getTextDocument),
     findReferences: references.register(languageService, getTextDocument),
     onDocumentUpdate,
-    getVirtualDocumentInfo,
     update,
   };
 
   function update() {
+    const mds = folders
+      .map((folder) => [...fg.sync(`${folder}/components/**/*.md`), ...fg.sync(`${folder}/src/**/*.md`)])
+      .flat();
+
+    let change = false;
+    mds.forEach((markdown) => {
+      const virtualName = toVirtualPath(markdown);
+      if (!mdMap.has(virtualName)) {
+        mdMap.set(markdown, { version: 0, fileName: virtualName });
+        virtualMap.set(virtualName, markdown);
+        change = true;
+      }
+    });
+
     parsedCommandLine = createParsedCommandLine(
       ts,
       tsConfigs[0],
@@ -88,30 +93,17 @@ export function createLanguageService(
           version: 0,
           fileName,
         });
+        change = true;
       }
+    }
+
+    if (change) {
+      projectVersion++;
     }
   }
 
   function dispose() {
     languageService.dispose();
-  }
-
-  function getVirtualDocumentInfo(uri: string, _position: Position) {
-    const fileName = toVirtualPath(uriToFsPath(uri));
-    const res: {
-      uri: string;
-      fileName: string;
-      position: Position
-    } = {
-      uri,
-      fileName,
-      position: _position,
-    };
-    const loc = location.get(fileName);
-    if (loc?.start) {
-      res.position.line = _position.line - loc.start.line;
-    }
-    return res;
   }
 
   function createTsLanguageServiceHost() {
@@ -130,7 +122,7 @@ export function createLanguageService(
       getProjectVersion: () => `${projectVersion}`,
       getScriptFileNames: () => [
         ...parsedCommandLine.fileNames,
-        ...([...mds.values()].map(({ fileName }) => fileName)),
+        ...([...mdMap.values()].map(({ fileName }) => fileName)),
       ],
       getScriptVersion,
       getCurrentDirectory: () => path.dirname(tsConfigs[0]),
@@ -144,14 +136,12 @@ export function createLanguageService(
     const fileName = normalizeFileName(
       ts.sys.realpath?.(_fileName) ?? _fileName,
     );
-    const exists = !!ts.sys.fileExists?.(fileName);
-
-    return exists;
+    return !!ts.sys.fileExists?.(fileName);
   }
 
   function getScriptVersion(fileName: string) {
     const virtual = virtualMap.get(fileName);
-    return `${virtual ? mds.get(virtual)?.version : tsFiles.get(fileName)?.version || 0}`;
+    return `${virtual ? mdMap.get(virtual)?.version : tsFiles.get(fileName)?.version || 0}`;
   }
 
   function getScriptSnapshot(fileName: string) {
@@ -174,7 +164,7 @@ export function createLanguageService(
   function getScriptText(fileName: string) {
     const doc = documents.get(fsPathToUri(toRealFilePath(fileName)));
     if (doc) {
-      return virtualMap.has(fileName) ? createSourceFile(fileName, doc.getText()) : doc.getText();
+      return virtualMap.has(fileName) ? parseSourceFile(fileName, doc.getText()) : doc.getText();
     }
     if (ts.sys.fileExists(fileName)) {
       return ts.sys.readFile(fileName, 'utf8');
@@ -205,12 +195,12 @@ export function createLanguageService(
 
   function onDocumentUpdate(document: TextDocument) {
     const fsPath = uriToFsPath(document.uri);
-    const markdown = mds.get(fsPath);
+    const markdown = mdMap.get(fsPath);
     const fileName = markdown ? markdown.fileName : fsPath;
     const snapshot = snapshots.get(fileName);
     if (snapshot) {
       const snapshotLength = snapshot.snapshot.getLength();
-      const documentText = markdown ? createSourceFile(fileName, document.getText()) : document.getText();
+      const documentText = markdown ? parseSourceFile(fileName, document.getText()) : document.getText();
       if (
         snapshotLength === documentText.length
         && snapshot.snapshot.getText(0, snapshotLength) === documentText

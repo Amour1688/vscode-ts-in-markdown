@@ -1,9 +1,9 @@
-import { parse, SourceLocation } from '@ts-in-markdown/shared';
+import { parse, Location } from '@ts-in-markdown/shared';
 
-export const location = new Map<string, SourceLocation>(); // virtual path
+export const locationMap = new Map<string, Location[]>(); // virtual path
 
-export function createSourceFile(fileName: string, content: string) {
-  const { source = '', ...rest } = parse(content);
-  location.set(fileName, rest);
+export function parseSourceFile(fileName: string, content: string) {
+  const { source = '', locations } = parse(content);
+  locationMap.set(fileName, locations);
   return source;
 }

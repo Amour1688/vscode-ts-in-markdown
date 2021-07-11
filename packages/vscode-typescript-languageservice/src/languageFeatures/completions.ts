@@ -13,12 +13,24 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { uriToFsPath, toVirtualPath } from '@ts-in-markdown/shared';
 import { parseKindModifier } from '../utils/modifiers';
 import * as PConst from '../protocol.const';
+import { locationMap } from '../sourceFile';
 
 export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
   return (uri: string, position: Position, context?: CompletionContext): CompletionItem[] | undefined => {
     const tsxUri = toVirtualPath(uri);
     const document = getTextDocument(tsxUri);
     if (!document) {
+      return;
+    }
+
+    const locations = locationMap.get(uriToFsPath(tsxUri));
+
+    // should skip position outside the block
+    if (
+      locations?.some((location) => location.start
+        && location.end
+        && (location.start.line > position.line || location.end.line < position.line))
+    ) {
       return;
     }
 
@@ -37,7 +49,6 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
 
     const offset = document.offsetAt(position);
     const fileName = uriToFsPath(uri);
-
     const body = languageService.getCompletionsAtPosition(toVirtualPath(fileName), offset, {
       includeCompletionsWithInsertText: true,
     });
@@ -55,7 +66,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
     //   end: document.positionAt(optionalReplacementSpan.start + optionalReplacementSpan.length),
     // } : undefined;
 
-    const entries: CompletionItem[] = body.entries.map((entry) => {
+    const completionItems: CompletionItem[] = body.entries.map((entry) => {
       let item: CompletionItem = {
         label: entry.name,
         kind: convertKind(entry.kind),
@@ -70,7 +81,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
       return item;
     });
 
-    return entries;
+    return completionItems;
 
     function convertItem(tsEntry: TS.CompletionEntry, item: CompletionItem) {
       if (tsEntry.kindModifiers) {

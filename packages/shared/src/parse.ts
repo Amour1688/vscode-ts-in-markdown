@@ -5,9 +5,13 @@ export interface Position {
   column: number;
 }
 
-export interface SourceLocation {
+export interface Location {
   start?: Position;
   end?: Position;
+}
+
+export interface SourceLocation {
+  locations: Location[];
   source?: string;
 }
 
@@ -19,33 +23,57 @@ function isBlock(source: string, cursor: number) {
   return source.slice(cursor, cursor + 3) === '```';
 }
 
-export function parse(source: string) {
+export function parse(_source: string) {
   let i = 0;
-  const loc: SourceLocation = {};
   let line = 0;
   let column = 0;
-  while (i < source.length) {
+  let shouldReplace = true;
+  let location: Location | undefined = {};
+  const sourceLocation: SourceLocation = {
+    locations: [],
+  };
+  const results: string[] = [];
+
+  while (i < _source.length) {
+    const isLineBreak = _source[i] === '\n';
+    results[i] = shouldReplace && !isLineBreak ? ' ' : _source[i];
+
     i++;
     column++;
-    if (source[i] === '\n') {
+    if (isLineBreak) {
       line++;
       column = 0;
     }
 
-    if (isBlock(source, i) && (isCode(source, 'jsx', i + 3) || isCode(source, 'tsx', i + 3))) {
-      loc.start = {
-        line: line + 1,
-        column,
-        offset: i + 7,
+    if (isBlock(_source, i) && (isCode(_source, 'jsx', i + 3) || isCode(_source, 'tsx', i + 3))) {
+      // ```tsx live=true
+      while (i < _source.length && _source[i] !== '\n') {
+        results[i] = ' ';
+        i++;
+      }
+      shouldReplace = false;
+      location = {
+        start: {
+          line: line + 1,
+          column,
+          offset: i + 1,
+        },
       };
-    } else if (loc.start?.line && isBlock(source, i + 3)) {
-      loc.end = {
-        line: line + 1,
+    } else if (location?.start?.line && isBlock(_source, i + 3)) {
+      while (i < _source.length && _source[i] !== '\n') {
+        results[i] = _source[i];
+        i++;
+      }
+      location.end = {
+        line,
         column,
-        offset: i + 3,
+        offset: i,
       };
-      loc.source = source.slice(loc.start.offset, loc.end.offset);
+      shouldReplace = true;
+      sourceLocation.locations.push(location);
+      location = undefined;
     }
+    sourceLocation.source = results.join('');
   }
-  return loc;
+  return sourceLocation;
 }

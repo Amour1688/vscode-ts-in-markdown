@@ -18,8 +18,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
     }
 
     const offset = document.offsetAt(position);
-    const fileName = uriToFsPath(uri);
-    const definitions = languageService.getTypeDefinitionAtPosition(toVirtualPath(fileName), offset);
+    const definitions = languageService.getTypeDefinitionAtPosition(toVirtualPath(uriToFsPath(uri)), offset);
 
     const locationLinks = definitions?.map((definition) => {
       const targetUri = fsPathToUri(definition.fileName);

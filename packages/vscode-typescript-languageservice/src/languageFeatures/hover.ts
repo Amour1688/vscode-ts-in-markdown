@@ -19,8 +19,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
     }
 
     const offset = document.offsetAt(position);
-    const fileName = uriToFsPath(uri);
-    const info = languageService.getQuickInfoAtPosition(toVirtualPath(fileName), offset);
+    const info = languageService.getQuickInfoAtPosition(toVirtualPath(uriToFsPath(uri)), offset);
     if (!info) {
       return;
     }

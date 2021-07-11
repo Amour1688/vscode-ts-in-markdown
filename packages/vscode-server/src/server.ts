@@ -52,6 +52,7 @@ async function onInitialized() {
     documents,
     folders,
   );
+
   connection.client.register(
     DidChangeConfigurationNotification.type,
     undefined,

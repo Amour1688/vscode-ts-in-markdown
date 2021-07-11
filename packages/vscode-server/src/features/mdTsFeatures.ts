@@ -10,45 +10,47 @@ export function register(
 ) {
   const service = createLanguageService(ts, documents, folders);
 
+  for (const folder of folders) {
+    ts.sys.watchDirectory!(folder, () => {
+      service.update();
+    }, true);
+  }
+
   documents.onDidChangeContent((e) => {
     service.onDocumentUpdate(e.document);
   });
 
   connection.onCompletion((handler) => {
     const { textDocument: { uri }, position, context } = handler;
-    const doc = service.getVirtualDocumentInfo(uri, position);
-    return service.doCompletion(uri, doc.position, context);
+    return service.doCompletion(uri, position, context);
   });
 
   connection.onCompletionResolve((item) => service.doCompletionResolve(item));
 
   connection.onDefinition((handler) => {
     const { textDocument: { uri }, position } = handler;
-    const doc = service.getVirtualDocumentInfo(uri, position);
-    return service.findDefinitions(uri, doc.position);
+    return service.findDefinitions(uri, position);
   });
 
   connection.onHover((handler) => {
     const { textDocument: { uri }, position } = handler;
-    const doc = service.getVirtualDocumentInfo(uri, position);
-    return service.doHover(uri, doc.position);
+    return service.doHover(uri, position);
   });
 
   connection.onDocumentFormatting((handler) => {
-    const { textDocument, options } = handler;
-
-    return service.doFormatting(textDocument.uri, options);
+    const { textDocument: { uri }, options } = handler;
+    return service.doFormatting(uri, options);
   });
 
   connection.onTypeDefinition((handler) => {
     const { textDocument: { uri }, position } = handler;
-    const doc = service.getVirtualDocumentInfo(uri, position);
-    return service.fineTypeDefinition(uri, doc.position);
+    return service.fineTypeDefinition(uri, position);
   });
 
   connection.onReferences((handler) => {
     const { textDocument: { uri }, position } = handler;
-    const doc = service.getVirtualDocumentInfo(uri, position);
-    return service.findReferences(uri, doc.position);
+    return service.findReferences(uri, position);
   });
+
+  connection.onFoldingRanges((handler) => service.doFolding(handler.textDocument.uri));
 }
