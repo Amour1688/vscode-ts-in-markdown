@@ -72,6 +72,13 @@ export function createLanguageService(
       .map((folder) => [...fg.sync(`${folder}/components/**/*.md`), ...fg.sync(`${folder}/src/**/*.md`)])
       .flat();
 
+    const mdSet = new Set(mds);
+    for (const [markdown] of mdMap) {
+      if (!mdSet.has(markdown)) {
+        mdMap.delete(markdown);
+      }
+    }
+
     let change = false;
     mds.forEach((markdown) => {
       const virtualName = toVirtualPath(markdown);
@@ -86,6 +93,13 @@ export function createLanguageService(
       ts,
       tsConfigs[0],
     );
+
+    const fileNames = new Set(parsedCommandLine.fileNames);
+    for (const [fileName] of tsFiles) {
+      if (!fileNames.has(fileName)) {
+        tsFiles.delete(fileName);
+      }
+    }
 
     for (const fileName of parsedCommandLine.fileNames) {
       if (!tsFiles.has(fileName)) {
