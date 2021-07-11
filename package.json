@@ -1,7 +1,6 @@
 {
   "name": "ts-in-markdown",
   "displayName": "TS in Markdown",
-  "publisher": "Amour1688",
   "version": "0.0.2",
   "private": true,
   "description": "Language support for TS in markdown",
@@ -12,14 +11,19 @@
     "markdown",
     "typescript"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Dali-Team/ts-in-markdown"
+  },
+  "publisher": "Amour1688",
   "main": "./node_modules/@ts-in-markdown/vscode-client/out/extension",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "compile": "tsc -b tsconfig.build.json",
-    "watch": "tsc -b tsconfig.build.json -w",
-    "package": "vsce package --yarn"
+    "package": "vsce package --yarn",
+    "watch": "tsc -b tsconfig.build.json -w"
   },
   "activationEvents": [
     "onLanguage:markdown"
