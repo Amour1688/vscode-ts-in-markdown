@@ -1,28 +1,28 @@
 {
-	"compilerOptions": {
-		"target": "es2019",
-		"lib": [
-			"ES2020"
-		],
-		"module": "commonjs",
-		"moduleResolution": "node",
-		"sourceMap": true,
-		"composite": true,
-		"declaration": true,
-		"strict": true,
-		"baseUrl": "./",
-		"paths": {
-			"@ts-in-markdown/vscode-typescript-languageservice": [
-				"packages/vscode-typescript-languageservice/src"
-			],
-			"@ts-in-markdown/*": [
-				"packages/*/src"
-			]
-		},
-	},
-	"exclude": [
-		"node_modules",
-		"**/*/tests",
-		"**/*/testsCases",
-	],
+  "compilerOptions": {
+    "target": "es2019",
+    "lib": [
+      "ES2020"
+    ],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "composite": true,
+    "declaration": true,
+    "strict": true,
+    "baseUrl": "./",
+    "paths": {
+      "@ts-in-markdown/vscode-typescript-languageservice": [
+        "packages/vscode-typescript-languageservice/src"
+      ],
+      "@ts-in-markdown/*": [
+        "packages/*/src"
+      ]
+    },
+  },
+  "exclude": [
+    "node_modules",
+    "**/*/tests",
+    "**/*/testsCases",
+  ],
 }

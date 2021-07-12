@@ -13,32 +13,32 @@
       "args": [
         "--extensionDevelopmentPath=${workspaceRoot}"
       ],
-			"outFiles": ["${workspaceRoot}/client/out/**/*.js"],
+      "outFiles": ["${workspaceRoot}/client/out/**/*.js"],
       "preLaunchTask": {
         "type": "npm",
         "script": "watch"
       }
     },
     {
-			"type": "node",
-			"request": "attach",
-			"name": "Attach to Server - API",
-			"port": 6009,
-			"restart": true,
-			"outFiles": [
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Server - API",
+      "port": 6009,
+      "restart": true,
+      "outFiles": [
         "${workspaceRoot}/packages/shared/out/**/*.js",
-				"${workspaceRoot}/packages/vscode-server/out/**/*.js",
-				"${workspaceRoot}/packages/vscode-typescript-languageservice/out/**/*.js"
-			]
-		},
+        "${workspaceRoot}/packages/vscode-server/out/**/*.js",
+        "${workspaceRoot}/packages/vscode-typescript-languageservice/out/**/*.js"
+      ]
+    },
   ],
   "compounds": [
-		{
-			"name": "Client + Server",
-			"configurations": [
-				"Launch Client",
-				"Attach to Server - API",
-			]
-		}
-	]
+    {
+      "name": "Client + Server",
+      "configurations": [
+        "Launch Client",
+        "Attach to Server - API",
+      ]
+    }
+  ]
 }

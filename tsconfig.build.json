@@ -1,18 +1,18 @@
 {
-	"files": [],
-	"include": [],
-	"references": [
-		{
-			"path": "./packages/vscode-client/tsconfig.build.json"
-		},
-		{
-			"path": "./packages/vscode-server/tsconfig.build.json"
-		},
-		{
-			"path": "./packages/vscode-typescript-languageservice/tsconfig.build.json"
-		},
-		{
-			"path": "./packages/shared/tsconfig.build.json"
-		}
-	]
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./packages/vscode-client/tsconfig.build.json"
+    },
+    {
+      "path": "./packages/vscode-server/tsconfig.build.json"
+    },
+    {
+      "path": "./packages/vscode-typescript-languageservice/tsconfig.build.json"
+    },
+    {
+      "path": "./packages/shared/tsconfig.build.json"
+    }
+  ]
 }

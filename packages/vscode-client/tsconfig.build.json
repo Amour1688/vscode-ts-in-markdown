@@ -1,18 +1,18 @@
 {
-	"extends": "../../tsconfig.base.json",
-	"compilerOptions": {
-		"outDir": "out",
-		"rootDir": "src",
-	},
-	"include": [
-		"src"
-	],
-	"exclude": [
-		"node_modules",
-	],
-	"references": [
-		{
-			"path": "../shared/tsconfig.build.json"
-		}
-	]
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "out",
+    "rootDir": "src",
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+  ],
+  "references": [
+    {
+      "path": "../shared/tsconfig.build.json"
+    }
+  ]
 }

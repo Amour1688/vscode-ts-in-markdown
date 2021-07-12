@@ -57,7 +57,7 @@ export function createLanguageService(
     dispose,
     doHover: hover.register(languageService, getTextDocument, ts),
     doCompletion: completions.register(languageService, getTextDocument),
-    doCompletionResolve: completionResolve.register(languageService, getTextDocument),
+    doCompletionResolve: completionResolve.register(),
     doFormatting: formatting.register(languageService, getTextDocument),
     doFolding: folding.register(languageService, getTextDocument),
     fineTypeDefinition: typeDefinition.register(languageService, getTextDocument),
