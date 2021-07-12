@@ -13,10 +13,10 @@ Markdown by default disables quick suggests on normal words. It can be re-enable
 ```json
 {
   "[markdown]": {
-		"editor.quickSuggestions": {
-			"other": true,
-			"comments": true,
-			"strings": true
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": true,
+      "strings": true
 		}
 	}
 }
