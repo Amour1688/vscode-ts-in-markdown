@@ -17,7 +17,7 @@ Markdown by default disables quick suggests on normal words. It can be re-enable
       "other": true,
       "comments": true,
       "strings": true
-		}
-	}
+    }
+  }
 }
 ```
