@@ -69,7 +69,7 @@ export function createLanguageService(
 
   function update() {
     const mds = folders
-      .map((folder) => [...fg.sync(`${folder}/**/*.md`, { ignore: [`${folder}/*`] })])
+      .map((folder) => [...fg.sync(`${folder}/**/*.md`, { ignore: ['**/node_modules/**'] })])
       .flat();
 
     const mdSet = new Set(mds);
