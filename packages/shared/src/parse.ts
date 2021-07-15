@@ -15,6 +15,8 @@ export interface SourceLocation {
   source?: string;
 }
 
+export const locationMap = new Map<string, Location[]>(); // virtual path
+
 function isCode(source: string, lang: string, start: number) {
   return source.slice(start, start + lang.length) === lang;
 }
@@ -76,4 +78,10 @@ export function parse(_source: string) {
     sourceLocation.source = results.join('');
   }
   return sourceLocation;
+}
+
+export function parseMarkdown(fileName: string, content: string) {
+  const { source = '', locations } = parse(content);
+  locationMap.set(fileName, locations);
+  return source;
 }

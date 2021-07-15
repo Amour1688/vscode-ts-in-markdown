@@ -6,14 +6,12 @@ import {
   CompletionItemKind,
   CompletionItemTag,
   Position,
-  // Range,
   TextEdit,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uriToFsPath, toVirtualPath } from '@ts-in-markdown/shared';
+import { uriToFsPath, toVirtualPath, locationMap } from '@ts-in-markdown/shared';
 import { parseKindModifier } from '../utils/modifiers';
 import * as PConst from '../protocol.const';
-import { locationMap } from '../sourceFile';
 
 export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
   return (uri: string, position: Position, context?: CompletionContext): CompletionItem[] | undefined => {
@@ -59,6 +57,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
 
     const {
       isNewIdentifierLocation,
+      // optionalReplacementSpan,
     } = body;
 
     // const wordRange: Range = optionalReplacementSpan ? {

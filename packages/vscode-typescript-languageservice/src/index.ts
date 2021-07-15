@@ -8,19 +8,18 @@ import {
   normalizeFileName,
   toVirtualPath,
   toRealFilePath,
+  parseMarkdown,
 } from '@ts-in-markdown/shared';
 import { TextDocuments } from 'vscode-languageserver/node';
 import * as hover from './languageFeatures/hover';
 import * as definitions from './languageFeatures/definitions';
-import * as completions from './languageFeatures/completions';
+import * as completion from './languageFeatures/completion';
 import * as completionResolve from './languageFeatures/completionResolve';
 import * as typeDefinition from './languageFeatures/typeDefinition';
+import * as diagnostics from './languageFeatures/diagnostics';
 import * as formatting from './languageFeatures/formatting';
 import * as folding from './languageFeatures/folding';
 import * as references from './languageFeatures/references';
-import { parseSourceFile } from './sourceFile';
-
-export * from './sourceFile';
 
 export function createLanguageService(
   ts: typeof import('typescript/lib/tsserverlibrary'),
@@ -56,7 +55,8 @@ export function createLanguageService(
   return {
     dispose,
     doHover: hover.register(languageService, getTextDocument, ts),
-    doCompletion: completions.register(languageService, getTextDocument),
+    doCompletion: completion.register(languageService, getTextDocument),
+    doValidation: diagnostics.register(),
     doCompletionResolve: completionResolve.register(),
     doFormatting: formatting.register(languageService, getTextDocument),
     doFolding: folding.register(languageService, getTextDocument),
@@ -69,7 +69,7 @@ export function createLanguageService(
 
   function update() {
     const mds = folders
-      .map((folder) => [...fg.sync(`${folder}/components/**/*.md`), ...fg.sync(`${folder}/src/**/*.md`)])
+      .map((folder) => [...fg.sync(`${folder}/**/*.md`, { ignore: [`${folder}/*`] })])
       .flat();
 
     const mdSet = new Set(mds);
@@ -178,7 +178,7 @@ export function createLanguageService(
   function getScriptText(fileName: string) {
     const doc = documents.get(fsPathToUri(toRealFilePath(fileName)));
     if (doc) {
-      return virtualMap.has(fileName) ? parseSourceFile(fileName, doc.getText()) : doc.getText();
+      return virtualMap.has(fileName) ? parseMarkdown(fileName, doc.getText()) : doc.getText();
     }
     if (ts.sys.fileExists(fileName)) {
       return ts.sys.readFile(fileName, 'utf8');
@@ -214,7 +214,7 @@ export function createLanguageService(
     const snapshot = snapshots.get(fileName);
     if (snapshot) {
       const snapshotLength = snapshot.snapshot.getLength();
-      const documentText = markdown ? parseSourceFile(fileName, document.getText()) : document.getText();
+      const documentText = markdown ? parseMarkdown(fileName, document.getText()) : document.getText();
       if (
         snapshotLength === documentText.length
         && snapshot.snapshot.getText(0, snapshotLength) === documentText

@@ -6,7 +6,11 @@ import {
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
-  toVirtualPath, uriToFsPath, filterEmpty, fsPathToUri, toRealFilePath,
+  toVirtualPath,
+  uriToFsPath,
+  filterEmpty,
+  fsPathToUri,
+  toRealFilePath,
 } from '@ts-in-markdown/shared';
 
 export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
@@ -19,11 +23,8 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
 
     const offset = document.offsetAt(position);
     const referenceEntries = languageService.getReferencesAtPosition(toVirtualPath(uriToFsPath(uri)), offset);
-    if (!referenceEntries) {
-      return [];
-    }
 
-    return referenceEntries.map((referenceEntry) => {
+    return referenceEntries?.map((referenceEntry) => {
       const targetUri = fsPathToUri(referenceEntry.fileName);
       const doc = getTextDocument(targetUri);
       if (!doc) {
