@@ -16,8 +16,13 @@ export function register(
     }, true);
   }
 
-  documents.onDidChangeContent((e) => {
-    service.onDocumentUpdate(e.document);
+  documents.onDidChangeContent(({ document }) => {
+    service.onDocumentUpdate(document);
+    const diagnostics = service.doValidation(document.uri);
+    connection.sendDiagnostics({
+      uri: document.uri,
+      diagnostics,
+    });
   });
 
   connection.onCompletion((handler) => {
