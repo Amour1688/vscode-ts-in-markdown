@@ -7,11 +7,11 @@ import type {
   Hover,
   Position,
 } from 'vscode-languageserver/node';
-import * as TS from 'typescript';
+import type * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { markdownDocumentation } from '../utils/previewer';
 
-export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined, ts: typeof import('typescript')) {
+export function register(languageService: ts.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined, { displayPartsToString }: typeof import('typescript')) {
   return (uri: string, position: Position): Hover | undefined => {
     const document = getTextDocument(toVirtualPath(uri));
     if (!document) {
@@ -25,7 +25,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
     }
 
     const parts: string[] = [];
-    const displayString = ts.displayPartsToString(info.displayParts);
+    const displayString = displayPartsToString(info.displayParts);
     const documentation = markdownDocumentation(info.documentation, info.tags);
 
     if (displayString) {

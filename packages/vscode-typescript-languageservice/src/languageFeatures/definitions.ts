@@ -1,4 +1,4 @@
-import * as TS from 'typescript';
+import * as ts from 'typescript';
 import {
   Position,
   Range,
@@ -7,7 +7,7 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { uriToFsPath, fsPathToUri, toVirtualPath } from '@ts-in-markdown/shared';
 
-export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
+export function register(languageService: ts.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
   return (uri: string, position: Position): LocationLink[] => {
     const tsxUri = toVirtualPath(uri);
     const document = getTextDocument(tsxUri);

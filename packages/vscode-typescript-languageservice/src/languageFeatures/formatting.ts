@@ -1,4 +1,4 @@
-import * as TS from 'typescript';
+import * as ts from 'typescript';
 import {
   FormattingOptions,
   TextEdit,
@@ -6,7 +6,7 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { uriToFsPath, toVirtualPath } from '@ts-in-markdown/shared';
 
-export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
+export function register(languageService: ts.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
   return (uri: string, options: FormattingOptions): TextEdit[] => {
     const tsxUri = toVirtualPath(uri);
     const document = getTextDocument(tsxUri);
@@ -14,7 +14,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
       return [];
     }
 
-    const tsOptions: TS.FormatCodeSettings = {
+    const tsOptions: ts.FormatCodeSettings = {
       ...options,
     };
 

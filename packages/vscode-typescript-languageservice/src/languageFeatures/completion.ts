@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-import * as TS from 'typescript';
+import type * as ts from 'typescript';
 import {
   CompletionContext,
   CompletionItem,
@@ -13,7 +13,7 @@ import { uriToFsPath, toVirtualPath, locationMap } from '@ts-in-markdown/shared'
 import { parseKindModifier } from '../utils/modifiers';
 import * as PConst from '../protocol.const';
 
-export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
+export function register(languageService: ts.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
   return (uri: string, position: Position, context?: CompletionContext): CompletionItem[] | undefined => {
     const tsxUri = toVirtualPath(uri);
     const document = getTextDocument(tsxUri);
@@ -82,7 +82,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
 
     return completionItems;
 
-    function convertItem(tsEntry: TS.CompletionEntry, item: CompletionItem) {
+    function convertItem(tsEntry: ts.CompletionEntry, item: CompletionItem) {
       if (tsEntry.kindModifiers) {
         const kindModifiers = parseKindModifier(tsEntry.kindModifiers);
         if (!item.filterText) {
@@ -126,7 +126,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
       return item;
     }
 
-    function getCommitCharacters(entry: TS.CompletionEntry) {
+    function getCommitCharacters(entry: ts.CompletionEntry) {
       if (isNewIdentifierLocation) {
         return;
       }

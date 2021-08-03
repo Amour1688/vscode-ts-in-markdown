@@ -4,11 +4,15 @@ import {
   DiagnosticTag,
   DiagnosticSeverity,
 } from 'vscode-languageserver/node';
-import * as TS from 'typescript';
+import type * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { toVirtualPath, uriToFsPath } from '@ts-in-markdown/shared';
 
-export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
+export function register(
+  languageService: ts.LanguageService,
+  getTextDocument: (uri: string) => TextDocument | undefined,
+  { DiagnosticCategory }: typeof import('typescript/lib/tsserverlibrary'),
+) {
   return (uri: string): Diagnostic[] => {
     const tsxUri = toVirtualPath(uri);
     const document = getTextDocument(tsxUri);
@@ -24,7 +28,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
       return [];
     }
 
-    let errors: TS.Diagnostic[] = [];
+    let errors: ts.Diagnostic[] = [];
 
     try {
       errors = [
@@ -70,13 +74,13 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
 
     return diagnostics;
   };
-}
 
-function convertErrorType(category: TS.DiagnosticCategory) {
-  switch (category) {
-    case TS.DiagnosticCategory.Warning: return DiagnosticSeverity.Warning;
-    case TS.DiagnosticCategory.Error: return DiagnosticSeverity.Error;
-    case TS.DiagnosticCategory.Suggestion: return DiagnosticSeverity.Hint;
-    case TS.DiagnosticCategory.Message: return DiagnosticSeverity.Information;
+  function convertErrorType(category: ts.DiagnosticCategory) {
+    switch (category) {
+      case DiagnosticCategory.Warning: return DiagnosticSeverity.Warning;
+      case DiagnosticCategory.Error: return DiagnosticSeverity.Error;
+      case DiagnosticCategory.Suggestion: return DiagnosticSeverity.Hint;
+      case DiagnosticCategory.Message: return DiagnosticSeverity.Information;
+    }
   }
 }

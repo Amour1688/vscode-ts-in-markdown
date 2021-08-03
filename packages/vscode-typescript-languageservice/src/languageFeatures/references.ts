@@ -1,4 +1,4 @@
-import * as TS from 'typescript';
+import * as ts from 'typescript';
 import {
   Location,
   Position,
@@ -13,7 +13,7 @@ import {
   toRealFilePath,
 } from '@ts-in-markdown/shared';
 
-export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
+export function register(languageService: ts.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
   return (uri: string, position: Position): Location[] => {
     const tsxUri = toVirtualPath(uri);
     const document = getTextDocument(tsxUri);

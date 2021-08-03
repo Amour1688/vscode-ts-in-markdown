@@ -1,4 +1,4 @@
-import * as TS from 'typescript';
+import * as ts from 'typescript';
 import {
   FoldingRange,
   FoldingRangeKind,
@@ -6,7 +6,7 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { uriToFsPath, toVirtualPath } from '@ts-in-markdown/shared';
 
-export function register(languageService: TS.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
+export function register(languageService: ts.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
   return (uri: string): FoldingRange[] => {
     const tsxUri = toVirtualPath(uri);
     const document = getTextDocument(tsxUri);
@@ -30,7 +30,7 @@ export function register(languageService: TS.LanguageService, getTextDocument: (
   };
 }
 
-function getFoldingRangeKind(kind: TS.OutliningSpanKind) {
+function getFoldingRangeKind(kind: ts.OutliningSpanKind) {
   switch (kind) {
     case 'comment': return FoldingRangeKind.Comment;
     case 'region': return FoldingRangeKind.Region;
