@@ -14,9 +14,16 @@ import * as PConst from '../protocol.const';
 
 export function register(
   languageService: ts.LanguageService,
-  getTextDocument: (uri: string, position: Position) => { document?: TextDocument, virtualFsPath: string } | undefined
+  getTextDocument: (
+    uri: string,
+    position: Position
+  ) => { document?: TextDocument; virtualFsPath: string } | undefined,
 ) {
-  return (uri: string, position: Position, context?: CompletionContext): CompletionItem[] | undefined => {
+  return (
+    uri: string,
+    position: Position,
+    context?: CompletionContext,
+  ): CompletionItem[] | undefined => {
     const { document, virtualFsPath } = getTextDocument(uri, position) ?? {};
     if (!document) {
       return;
@@ -47,9 +54,13 @@ export function register(
     }
 
     const offset = document.offsetAt(position);
-    const body = languageService.getCompletionsAtPosition(virtualFsPath!, offset, {
-      includeCompletionsWithInsertText: true,
-    });
+    const body = languageService.getCompletionsAtPosition(
+      virtualFsPath!,
+      offset,
+      {
+        includeCompletionsWithInsertText: true,
+      },
+    );
 
     if (!body) {
       return;
@@ -103,7 +114,8 @@ export function register(
         }
 
         if (tsEntry.kind === PConst.Kind.script) {
-          for (const extModifier of PConst.KindModifiers.fileExtensionKindModifiers) {
+          for (const extModifier of PConst.KindModifiers
+            .fileExtensionKindModifiers) {
             if (kindModifiers.has(extModifier)) {
               if (tsEntry.name.toLowerCase().endsWith(extModifier)) {
                 item.detail = tsEntry.name;
@@ -117,10 +129,15 @@ export function register(
       }
 
       if (isNewIdentifierLocation && tsEntry.replacementSpan) {
-        item.textEdit = TextEdit.replace({
-          start: document!.positionAt(tsEntry.replacementSpan.start),
-          end: document!.positionAt(tsEntry.replacementSpan.start + tsEntry.replacementSpan.length),
-        }, item.insertText ?? item.label);
+        item.textEdit = TextEdit.replace(
+          {
+            start: document!.positionAt(tsEntry.replacementSpan.start),
+            end: document!.positionAt(
+              tsEntry.replacementSpan.start + tsEntry.replacementSpan.length,
+            ),
+          },
+          item.insertText ?? item.label,
+        );
       }
 
       return item;
@@ -165,15 +182,21 @@ export function register(
 
 function shouldTrigger(pre: string, context: CompletionContext) {
   if (context.triggerCharacter) {
-    if (context.triggerCharacter === '"' || context.triggerCharacter === '\'') {
+    if (context.triggerCharacter === '"' || context.triggerCharacter === "'") {
       // make sure we are in something that looks like the start of an import
-      if (!/\b(from|import)\s*["']$/.test(pre) && !/\b(import|require)\(['"]$/.test(pre)) {
+      if (
+        !/\b(from|import)\s*["']$/.test(pre)
+        && !/\b(import|require)\(['"]$/.test(pre)
+      ) {
         return false;
       }
     }
     if (context.triggerCharacter === '/') {
       // make sure we are in something that looks like an import path
-      if (!/\b(from|import)\s*["'][^'"]*$/.test(pre) && !/\b(import|require)\(['"][^'"]*$/.test(pre)) {
+      if (
+        !/\b(from|import)\s*["'][^'"]*$/.test(pre)
+        && !/\b(import|require)\(['"][^'"]*$/.test(pre)
+      ) {
         return false;
       }
     }

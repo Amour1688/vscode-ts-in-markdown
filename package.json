@@ -23,8 +23,8 @@
   "scripts": {
     "build": "tsc -b tsconfig.build.json",
     "package": "vsce package --yarn",
-    "watch": "tsc -b tsconfig.build.json -w",
-    "test": "jest"
+    "test": "jest",
+    "watch": "tsc -b tsconfig.build.json -w"
   },
   "activationEvents": [
     "onLanguage:markdown"
@@ -37,6 +37,7 @@
     "eslint-config-airbnb-typescript": "^12.3.1",
     "eslint-plugin-import": "^2.22.1",
     "jest": "^27.0.6",
+    "prettier": "^2.3.2",
     "ts-jest": "^27.0.4",
     "typescript": "latest",
     "vsce": "latest"

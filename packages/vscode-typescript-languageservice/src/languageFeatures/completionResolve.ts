@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 import {
   CompletionItem,
 } from 'vscode-languageserver/node';

@@ -37,7 +37,6 @@ export function parse(_source: string) {
     locations: [],
     contents: [],
   };
-  
 
   while (i < _source.length) {
     const isLineBreak = _source[i] === '\n';
@@ -62,7 +61,7 @@ export function parse(_source: string) {
           line: line + 1,
           column,
           offset: i + 1,
-        }
+        },
       };
     } else if (location?.start?.line && isBlock(_source, i + 3)) {
       while (i < _source.length && _source[i] !== '\n') {

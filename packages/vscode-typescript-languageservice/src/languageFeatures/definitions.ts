@@ -10,7 +10,7 @@ import { fsPathToUri } from '@ts-in-markdown/shared';
 export function register(
   languageService: ts.LanguageService,
   getTextDocumentByPosition: (uri: string, position: Position) => { document?: TextDocument, virtualFsPath: string } | undefined,
-  getTextDocument: (uri: string) => (TextDocument | undefined)[]
+  getTextDocument: (uri: string) => (TextDocument | undefined)[],
 ) {
   return (uri: string, position: Position): LocationLink[] => {
     const { document, virtualFsPath } = getTextDocumentByPosition(uri, position) ?? {};
@@ -34,7 +34,7 @@ export function register(
       const locationUri = fsPathToUri(location.fileName);
       const docs = getTextDocument(locationUri);
 
-      docs.forEach(doc => {
+      docs.forEach((doc) => {
         if (!doc) {
           return;
         }

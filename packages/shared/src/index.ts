@@ -4,7 +4,9 @@ import { URI } from 'vscode-uri';
 export * from './interface';
 export * from './parse';
 
-export function loadTypeScript(appRoot: string): typeof import('typescript/lib/tsserverlibrary') {
+export function loadTypeScript(
+  appRoot: string,
+): typeof import('typescript/lib/tsserverlibrary') {
   const tsPath = path.join(appRoot, 'extensions', 'node_modules', 'typescript');
   // eslint-disable-next-line
   return require(tsPath);

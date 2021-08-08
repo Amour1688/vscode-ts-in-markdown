@@ -20,7 +20,7 @@ export function register(
     service.onDocumentUpdate(document);
 
     const openedMarkdownDocs: TextDocument[] = [];
-    documents.all().forEach(doc => {
+    documents.all().forEach((doc) => {
       if (doc.languageId === 'markdown') {
         openedMarkdownDocs.push(doc);
       }

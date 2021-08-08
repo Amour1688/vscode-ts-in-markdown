@@ -4,11 +4,11 @@ import {
   FoldingRangeKind,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uriToFsPath, toVirtualPath } from '@ts-in-markdown/shared';
+import { uriToFsPath } from '@ts-in-markdown/shared';
 
 export function register(
   languageService: ts.LanguageService,
-  getTextDocument: (uri: string) => (TextDocument | undefined)[]
+  getTextDocument: (uri: string) => (TextDocument | undefined)[],
 ) {
   return (uri: string): FoldingRange[] => {
     const documents = getTextDocument(uri);

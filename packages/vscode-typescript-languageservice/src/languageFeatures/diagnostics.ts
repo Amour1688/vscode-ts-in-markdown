@@ -57,7 +57,10 @@ export function register(
           severity: convertErrorType(error.category),
           source: 'ts',
           code: error.code,
-          message: typeof error.messageText === 'string' ? error.messageText : error.messageText.messageText,
+          message:
+            typeof error.messageText === 'string'
+              ? error.messageText
+              : error.messageText.messageText,
         };
         if (error.reportsDeprecated) {
           diagnostic.tags = [DiagnosticTag.Deprecated];
@@ -77,10 +80,14 @@ export function register(
 
   function convertErrorType(category: ts.DiagnosticCategory) {
     switch (category) {
-      case DiagnosticCategory.Warning: return DiagnosticSeverity.Warning;
-      case DiagnosticCategory.Error: return DiagnosticSeverity.Error;
-      case DiagnosticCategory.Suggestion: return DiagnosticSeverity.Hint;
-      case DiagnosticCategory.Message: return DiagnosticSeverity.Information;
+      case DiagnosticCategory.Warning:
+        return DiagnosticSeverity.Warning;
+      case DiagnosticCategory.Error:
+        return DiagnosticSeverity.Error;
+      case DiagnosticCategory.Suggestion:
+        return DiagnosticSeverity.Hint;
+      case DiagnosticCategory.Message:
+        return DiagnosticSeverity.Information;
     }
   }
 }

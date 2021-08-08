@@ -1,6 +1,5 @@
 module.exports = {
   root: true,
-  files: ['*.ts', '*.tsx'],
   parserOptions: {
     ecmaVersion: 2020,
     project: ['./tsconfig.json'],
@@ -24,6 +23,10 @@ module.exports = {
     'no-plusplus': [0],
     'no-restricted-syntax': [0],
     'import/no-extraneous-dependencies': [0],
-    'default-case': [0]
-  }
+    'default-case': [0],
+    'no-continue': [0]
+  },
+  ignorePatterns: [
+    '*.js'
+  ]
 };
