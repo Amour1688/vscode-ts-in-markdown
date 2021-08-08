@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as vscode from 'vscode';
+import type * as vscode from 'vscode';
 import type * as Proto from '../protocol';
 
 export interface IFilePathToResourceConverter {
@@ -155,8 +155,7 @@ function convertLinkTags(
       case 'linkName':
         if (currentLink) {
           currentLink.name = part.text;
-          // TODO: remove cast once we pick up TS 4.3
-          currentLink.target = (part as any as Proto.JSDocLinkDisplayPart).target;
+          currentLink.target = (part as Proto.JSDocLinkDisplayPart).target;
         }
         break;
 
@@ -194,12 +193,7 @@ export function markdownDocumentation(
   tags: Proto.JSDocTagInfo[] | undefined,
   filePathConverter: IFilePathToResourceConverter,
 ): string {
-  const newTags: Proto.JSDocTagInfo[] | undefined = tags?.map((tag) => ({
-    name: tag.name,
-    // TODO
-    text: (tag.text as any).map?.(({ text }: any) => text).join('') ?? tag.text,
-  }));
-  return addMarkdownDocumentation('', documentation, newTags, filePathConverter);
+  return addMarkdownDocumentation('', documentation, tags, filePathConverter);
 }
 
 export function addMarkdownDocumentation(
