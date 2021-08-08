@@ -1,4 +1,4 @@
-import { uriToFsPath, toVirtualPath } from '@ts-in-markdown/shared';
+import { URI } from 'vscode-uri';
 import {
   MarkupContent,
   MarkupKind,
@@ -30,7 +30,7 @@ export function register(
 
     const parts: string[] = [];
     const displayString = displayPartsToString(info.displayParts);
-    const documentation = markdownDocumentation(info.documentation, info.tags);
+    const documentation = markdownDocumentation(info.documentation, info.tags, { toResource: (fsPath: string) => URI.file(fsPath) });
 
     if (displayString) {
       parts.push(['```typescript', displayString, '```'].join('\n'));

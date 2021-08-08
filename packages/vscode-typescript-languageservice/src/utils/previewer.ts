@@ -36,6 +36,7 @@ function processInlineTags(text: string): string {
 
 function getTagBodyText(
   tag: Proto.JSDocTagInfo,
+  filePathConverter: IFilePathToResourceConverter,
 ): string | undefined {
   if (!tag.text) {
     return undefined;
@@ -49,40 +50,42 @@ function getTagBodyText(
     return `\`\`\`\n${text}\n\`\`\``;
   }
 
+  const text = convertLinkTags(tag.text, filePathConverter);
   switch (tag.name) {
     case 'example':
       // check for caption tags, fix for #79704
-      const captionTagMatches = tag.text.match(/<caption>(.*?)<\/caption>\s*(\r\n|\n)/);
+      const captionTagMatches = text.match(/<caption>(.*?)<\/caption>\s*(\r\n|\n)/);
       if (captionTagMatches && captionTagMatches.index === 0) {
-        return `${captionTagMatches[1]}\n\n${makeCodeblock(tag.text.substr(captionTagMatches[0].length))}`;
+        return `${captionTagMatches[1]}\n\n${makeCodeblock(text.substr(captionTagMatches[0].length))}`;
       }
-      return makeCodeblock(tag.text);
+      return makeCodeblock(text);
 
     case 'author':
       // fix obsucated email address, #80898
-      const emailMatch = tag.text.match(/(.+)\s<([-.\w]+@[-.\w]+)>/);
+      const emailMatch = text.match(/(.+)\s<([-.\w]+@[-.\w]+)>/);
 
       if (emailMatch === null) {
-        return tag.text;
+        return text;
       }
       return `${emailMatch[1]} ${emailMatch[2]}`;
 
     case 'default':
-      return makeCodeblock(tag.text);
+      return makeCodeblock(text);
   }
 
-  return processInlineTags(tag.text);
+  return processInlineTags(text);
 }
 
 function getTagDocumentation(
   tag: Proto.JSDocTagInfo,
+  filePathConverter: IFilePathToResourceConverter,
 ): string | undefined {
   switch (tag.name) {
     case 'augments':
     case 'extends':
     case 'param':
     case 'template':
-      const body = (tag.text || '').split(/^(\S+)\s*-?\s*/);
+      const body = (convertLinkTags(tag.text, filePathConverter)).split(/^(\S+)\s*-?\s*/);
       if (body?.length === 3) {
         const param = body[1];
         const doc = body[2];
@@ -96,7 +99,7 @@ function getTagDocumentation(
 
   // Generic tag
   const label = `*@${tag.name}*`;
-  const text = getTagBodyText(tag);
+  const text = getTagBodyText(tag, filePathConverter);
   if (!text) {
     return label;
   }
@@ -173,8 +176,9 @@ function convertLinkTags(
 
 export function tagsMarkdownPreview(
   tags: readonly Proto.JSDocTagInfo[],
+  filePathConverter: IFilePathToResourceConverter,
 ): string {
-  return tags.map((tag) => getTagDocumentation(tag)).join('  \n\n');
+  return tags.map((tag) => getTagDocumentation(tag, filePathConverter)).join('  \n\n');
 }
 
 export function plain(parts: Proto.SymbolDisplayPart[] | string): string {
@@ -188,26 +192,28 @@ export function plain(parts: Proto.SymbolDisplayPart[] | string): string {
 export function markdownDocumentation(
   documentation: Proto.SymbolDisplayPart[] | string | undefined,
   tags: Proto.JSDocTagInfo[] | undefined,
+  filePathConverter: IFilePathToResourceConverter,
 ): string {
   const newTags: Proto.JSDocTagInfo[] | undefined = tags?.map((tag) => ({
     name: tag.name,
     // TODO
     text: (tag.text as any).map?.(({ text }: any) => text).join('') ?? tag.text,
   }));
-  return addMarkdownDocumentation('', documentation, newTags);
+  return addMarkdownDocumentation('', documentation, newTags, filePathConverter);
 }
 
 export function addMarkdownDocumentation(
   out: string,
   documentation: Proto.SymbolDisplayPart[] | string | undefined,
   tags: Proto.JSDocTagInfo[] | undefined,
+  converter: IFilePathToResourceConverter,
 ): string {
   if (documentation) {
     out += plain(documentation);
   }
 
   if (tags) {
-    const tagsPreview = tagsMarkdownPreview(tags);
+    const tagsPreview = tagsMarkdownPreview(tags, converter);
     if (tagsPreview) {
       out += `\n\n${tagsPreview}`;
     }
