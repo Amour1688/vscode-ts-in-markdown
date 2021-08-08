@@ -6,24 +6,31 @@ import {
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
-  uriToFsPath, toVirtualPath, fsPathToUri, filterEmpty,
+  fsPathToUri,
 } from '@ts-in-markdown/shared';
 
-export function register(languageService: ts.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
+export function register(
+  languageService: ts.LanguageService,
+  getTextDocumentByPosition: (uri: string, position: Position) => { document?: TextDocument, virtualFsPath: string } | undefined,
+  getTextDocument: (uri: string) => (TextDocument | undefined)[]
+) {
   return (uri: string, position: Position): LocationLink[] => {
-    const tsxUri = toVirtualPath(uri);
-    const document = getTextDocument(tsxUri);
+    const { document, virtualFsPath } = getTextDocumentByPosition(uri, position) ?? {};
     if (!document) {
       return [];
     }
 
     const offset = document.offsetAt(position);
-    const definitions = languageService.getTypeDefinitionAtPosition(toVirtualPath(uriToFsPath(uri)), offset);
+    const definitions = languageService.getTypeDefinitionAtPosition(virtualFsPath!, offset);
 
-    const locationLinks = definitions?.map((definition) => {
+    const locationLinks: LocationLink[] = [];
+    definitions?.forEach((definition) => {
       const targetUri = fsPathToUri(definition.fileName);
-      const doc = getTextDocument(targetUri);
-      if (doc) {
+      const docs = getTextDocument(targetUri);
+      docs.forEach(doc => {
+        if (!doc) {
+          return;
+        }
         const targetSelectionRange: Range = {
           start: doc.positionAt(definition.textSpan.start),
           end: doc.positionAt(definition.textSpan.start + definition.textSpan.length),
@@ -37,15 +44,17 @@ export function register(languageService: ts.LanguageService, getTextDocument: (
           start: doc.positionAt(definition.originalTextSpan.start),
           end: doc.positionAt(definition.originalTextSpan.start + definition.originalTextSpan.length),
         } : undefined;
-        return {
+        locationLinks.push({
           targetUri,
           targetRange,
           originSelectionRange,
-        } as LocationLink;
-      }
+          targetSelectionRange,
+        });
+      })
+      
       return undefined;
-    }).filter(filterEmpty);
+    });
 
-    return locationLinks ?? [];
+    return locationLinks;
   };
 }

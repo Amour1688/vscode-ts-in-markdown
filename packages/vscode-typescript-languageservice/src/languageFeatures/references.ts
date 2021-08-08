@@ -6,38 +6,54 @@ import {
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import {
-  toVirtualPath,
   uriToFsPath,
-  filterEmpty,
   fsPathToUri,
-  toRealFilePath,
 } from '@ts-in-markdown/shared';
 
-export function register(languageService: ts.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
+export function register(
+  languageService: ts.LanguageService,
+  getTextDocument: (uri: string) => (TextDocument | undefined)[],
+  virtualMap: Map<string, {
+    originFileName: string;
+    blockIndex: number;
+    version: number;
+  }>
+) {
   return (uri: string, position: Position): Location[] => {
-    const tsxUri = toVirtualPath(uri);
-    const document = getTextDocument(tsxUri);
-    if (!document) {
+    const documents = getTextDocument(uri);
+    if (!documents) {
       return [];
     }
 
-    const offset = document.offsetAt(position);
-    const referenceEntries = languageService.getReferencesAtPosition(toVirtualPath(uriToFsPath(uri)), offset);
+    const locations: Location[] = [];
 
-    return referenceEntries?.map((referenceEntry) => {
-      const targetUri = fsPathToUri(referenceEntry.fileName);
-      const doc = getTextDocument(targetUri);
-      if (!doc) {
-        return;
+    for (const document of documents) {
+      if (!document) {
+        continue;
       }
-      const range: Range = {
-        start: doc.positionAt(referenceEntry.textSpan.start),
-        end: doc.positionAt(referenceEntry.textSpan.start + referenceEntry.textSpan.length),
-      };
-      return {
-        uri: toRealFilePath(targetUri),
-        range,
-      };
-    }).filter(filterEmpty) ?? [];
+
+      const offset = document.offsetAt(position);
+      const referenceEntries = languageService.getReferencesAtPosition(uriToFsPath(document.uri), offset);
+
+      referenceEntries?.forEach((referenceEntry) => {
+        const targetUri = fsPathToUri(referenceEntry.fileName);
+        const docs = getTextDocument(targetUri);
+        docs.forEach(doc => {
+          if (!doc) {
+            return;
+          }
+          const range: Range = {
+            start: doc.positionAt(referenceEntry.textSpan.start),
+            end: doc.positionAt(referenceEntry.textSpan.start + referenceEntry.textSpan.length),
+          };
+
+          locations.push({
+            uri: virtualMap.get(uriToFsPath(targetUri))?.originFileName ?? targetUri,
+            range,
+          });
+        })
+      });
+    }
+    return locations;
   };
 }

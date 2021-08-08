@@ -7,9 +7,12 @@ import {
   uriToFsPath,
   normalizeFileName,
   toVirtualPath,
-  toRealFilePath,
-  parseMarkdown,
+  parse,
+  Location,
 } from '@ts-in-markdown/shared';
+import {
+  Position,
+} from 'vscode-languageserver/node';
 import { TextDocuments } from 'vscode-languageserver/node';
 import * as hover from './languageFeatures/hover';
 import * as definitions from './languageFeatures/definitions';
@@ -39,8 +42,17 @@ export function createLanguageService(
   );
   const tsConfigs = [...tsConfigSet].filter((tsConfig) => tsConfigNames.includes(path.basename(tsConfig)));
   let parsedCommandLine: ts.ParsedCommandLine;
-  const mdMap = new Map<string, { version: number, fileName: string }>();
-  const virtualMap = new Map<string, string>();
+  const mdMap = new Map<string, {
+    version: number;
+    fileName: string;
+    contents?: string[];
+    locations?: Location[];
+  }>()
+  const virtualMap = new Map<string, {
+    originFileName: string;
+    blockIndex: number;
+    version: number;
+  }>();
   const tsFiles = new Map<string, { version: number; fileName: string }>();
   const documentsMap = new Map<string, { version: number, document: TextDocument }>();
 
@@ -60,9 +72,9 @@ export function createLanguageService(
     doCompletionResolve: completionResolve.register(),
     doFormatting: formatting.register(languageService, getTextDocument),
     doFolding: folding.register(languageService, getTextDocument),
-    fineTypeDefinition: typeDefinition.register(languageService, getTextDocument),
-    findDefinitions: definitions.register(languageService, getTextDocument),
-    findReferences: references.register(languageService, getTextDocument),
+    fineTypeDefinition: typeDefinition.register(languageService, getTextDocument, getTextDocument),
+    findDefinitions: definitions.register(languageService, getTextDocument, getTextDocument),
+    findReferences: references.register(languageService, getTextDocument, virtualMap),
     onDocumentUpdate,
     update,
   };
@@ -75,16 +87,19 @@ export function createLanguageService(
     const mdSet = new Set(mds);
     for (const [markdown] of mdMap) {
       if (!mdSet.has(markdown)) {
+        const value = mdMap.get(markdown);
+        value?.contents?.forEach((_, i) => {
+          virtualMap.delete(toVirtualPath(markdown, i));
+        })
         mdMap.delete(markdown);
       }
     }
 
     let change = false;
-    mds.forEach((markdown) => {
-      const virtualName = toVirtualPath(markdown);
-      if (!mdMap.has(virtualName)) {
-        mdMap.set(markdown, { version: 0, fileName: virtualName });
-        virtualMap.set(virtualName, markdown);
+
+    mds.forEach((md) => {
+      if (!mdMap.has(md)) {
+        mdMap.set(md, { version: 0, fileName: md });
         change = true;
       }
     });
@@ -136,7 +151,11 @@ export function createLanguageService(
       getProjectVersion: () => `${projectVersion}`,
       getScriptFileNames: () => [
         ...parsedCommandLine.fileNames,
-        ...([...mdMap.values()].map(({ fileName }) => fileName)),
+        ...[...mdMap.values()]
+          .map(({ fileName, contents = [] }) =>
+            contents.map((_, i) => toVirtualPath(fileName, i))
+          )
+          .flat(),
       ],
       getScriptVersion,
       getCurrentDirectory: () => path.dirname(tsConfigs[0]),
@@ -155,7 +174,7 @@ export function createLanguageService(
 
   function getScriptVersion(fileName: string) {
     const virtual = virtualMap.get(fileName);
-    return `${virtual ? mdMap.get(virtual)?.version : tsFiles.get(fileName)?.version || 0}`;
+    return `${(virtual ? virtual.version : tsFiles.get(fileName)?.version) || 0}`;
   }
 
   function getScriptSnapshot(fileName: string) {
@@ -175,56 +194,135 @@ export function createLanguageService(
     }
   }
 
-  function getScriptText(fileName: string) {
-    const doc = documents.get(fsPathToUri(toRealFilePath(fileName)));
-    if (doc) {
-      return virtualMap.has(fileName) ? parseMarkdown(fileName, doc.getText()) : doc.getText();
+  function getScriptText(fileName: string): string | undefined {
+    const virtual = virtualMap.get(fileName);
+    if (virtual) {
+      const { originFileName, blockIndex } = virtual;
+      const markdown = mdMap.get(originFileName);
+      if (markdown) {
+        const { contents = [] } = markdown;
+        return contents[blockIndex];
+      }
     }
+    const doc = documents.get(fsPathToUri(fileName));
+    if (doc) {
+      return doc.getText();
+    }
+
     if (ts.sys.fileExists(fileName)) {
       return ts.sys.readFile(fileName, 'utf8');
     }
   }
 
-  function getTextDocument(uri: string) {
-    const fileName = uriToFsPath(uri);
-    if (!languageService.getProgram()?.getSourceFile(fileName)) {
-      return;
-    }
-    const version = host.getScriptVersion(fileName);
-    const prev = documentsMap.get(fileName);
-    if (prev?.version !== Number(version)) {
-      const scriptSnapshot = host.getScriptSnapshot(fileName);
-      if (scriptSnapshot) {
-        const scriptText = scriptSnapshot.getText(0, scriptSnapshot.getLength());
-        const newVersion = prev?.version ? prev.version + 1 : 0;
-        const document = TextDocument.create(uri, 'typescript', newVersion, scriptText);
-        documentsMap.set(fileName, {
-          version: newVersion,
-          document,
+  function getTextDocument(uri: string, position: Position): { document: TextDocument | undefined, virtualFsPath: string } | undefined;
+  function getTextDocument(uri: string): (TextDocument | undefined)[];
+  function getTextDocument(uri: string, position?: Position) {
+    const fsPath = uriToFsPath(uri);
+    const markdown = mdMap.get(fsPath);
+    const fileNames: string[] = [];
+    let blockIndex: number = -1;
+    if (markdown) {
+      const document = documents.get(uri);
+      if (!document) {
+        return;
+      }
+      const { locations = [] } = markdown;
+      const saveFile = (index: number) => {
+        const fileName = toVirtualPath(fsPath, index);
+        fileNames.push(fileName);
+      }
+  
+      if (position) {
+        blockIndex = locations.findIndex(
+          location => location.start!.line <= position.line && location.end!.line >= position.line
+        );
+        if (blockIndex !== -1) {
+          saveFile(blockIndex);
+        }
+      } else {
+        locations.forEach((_, index) => {
+          saveFile(index);
         });
       }
+
+      if (!fileNames.length) {
+        return;
+      }
+    } else {
+      fileNames.push(fsPath);
     }
-    return documentsMap.get(fileName)?.document;
+
+    const textDocuments: (TextDocument | undefined)[] = [];
+    for (const fileName of fileNames) {
+      if (!languageService.getProgram()?.getSourceFile(fileName)) {
+        continue;
+      }
+      const version = host.getScriptVersion(fileName);
+      const prev = documentsMap.get(fileName);
+      if (prev?.version !== Number(version)) {
+        const scriptSnapshot = host.getScriptSnapshot(fileName);
+        if (scriptSnapshot) {
+          const scriptText = scriptSnapshot.getText(0, scriptSnapshot.getLength());
+          const newVersion = typeof prev?.version === 'number' ? prev.version + 1 : 0;
+          const document = TextDocument.create(fsPathToUri(fileName), 'typescript', newVersion, scriptText);
+          documentsMap.set(fileName, {
+            version: newVersion,
+            document,
+          });
+        }
+      }
+      textDocuments.push(documentsMap.get(fileName)?.document);
+    }
+    
+    return position ? { document: textDocuments[0], virtualFsPath: fileNames[0] } : textDocuments;
   }
 
   function onDocumentUpdate(document: TextDocument) {
     const fsPath = uriToFsPath(document.uri);
     const markdown = mdMap.get(fsPath);
-    const fileName = markdown ? markdown.fileName : fsPath;
-    const snapshot = snapshots.get(fileName);
-    if (snapshot) {
-      const snapshotLength = snapshot.snapshot.getLength();
-      const documentText = markdown ? parseMarkdown(fileName, document.getText()) : document.getText();
-      if (
-        snapshotLength === documentText.length
-        && snapshot.snapshot.getText(0, snapshotLength) === documentText
-      ) {
-        return;
+    const fileNames: string[] = [];
+    if (markdown) {
+      const { contents, locations } = parse(document.getText());
+      if (contents.length) {
+        Object.assign(markdown, { contents, locations });
+        locations.forEach((_, blockIndex) => {
+          const fileName = toVirtualPath(fsPath, blockIndex);
+          if (!virtualMap.has(fileName)) {
+            virtualMap.set(fileName, {
+              originFileName: fsPath,
+              blockIndex,
+              version: 0
+            });
+          }
+          fileNames.push(fileName);
+        });
+      }
+    } else {
+      fileNames.push(fsPath);
+    }
+
+    let change = false;
+    for (const fileName of fileNames) {
+      const snapshot = snapshots.get(fileName);
+      if (snapshot) {
+        const snapshotLength = snapshot.snapshot.getLength();
+        const documentText = markdown ? (markdown.contents || [])[virtualMap.get(fileName)!.blockIndex] : document.getText();
+        if (
+          snapshotLength === documentText.length
+          && snapshot.snapshot.getText(0, snapshotLength) === documentText
+        ) {
+          continue;
+        }
+        change = true;
+        const file = virtualMap.get(fileName) ?? tsFiles.get(fsPath);
+        if (file) {
+          file.version++;
+        }
+      } else {
+        change = true;
       }
     }
-    const file = markdown ?? tsFiles.get(fsPath);
-    if (file) {
-      file.version++;
+    if (change) {
       projectVersion++;
     }
   }

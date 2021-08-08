@@ -3,7 +3,7 @@ import {
   MarkupContent,
   MarkupKind,
 } from 'vscode-languageserver/node';
-import type {
+import {
   Hover,
   Position,
 } from 'vscode-languageserver/node';
@@ -11,15 +11,19 @@ import type * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { markdownDocumentation } from '../utils/previewer';
 
-export function register(languageService: ts.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined, { displayPartsToString }: typeof import('typescript')) {
+export function register(
+  languageService: ts.LanguageService,
+  getTextDocument: (uri: string, position: Position) => { document?: TextDocument, virtualFsPath: string } | undefined,
+  { displayPartsToString }: typeof import('typescript')
+) {
   return (uri: string, position: Position): Hover | undefined => {
-    const document = getTextDocument(toVirtualPath(uri));
+    const { document, virtualFsPath } = getTextDocument(uri, position) ?? {};
     if (!document) {
       return;
     }
 
     const offset = document.offsetAt(position);
-    const info = languageService.getQuickInfoAtPosition(toVirtualPath(uriToFsPath(uri)), offset);
+    const info = languageService.getQuickInfoAtPosition(virtualFsPath!, offset);
     if (!info) {
       return;
     }

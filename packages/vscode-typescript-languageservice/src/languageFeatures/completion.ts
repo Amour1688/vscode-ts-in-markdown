@@ -9,28 +9,29 @@ import {
   TextEdit,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uriToFsPath, toVirtualPath, locationMap } from '@ts-in-markdown/shared';
 import { parseKindModifier } from '../utils/modifiers';
 import * as PConst from '../protocol.const';
 
-export function register(languageService: ts.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
+export function register(
+  languageService: ts.LanguageService,
+  getTextDocument: (uri: string, position: Position) => { document?: TextDocument, virtualFsPath: string } | undefined
+) {
   return (uri: string, position: Position, context?: CompletionContext): CompletionItem[] | undefined => {
-    const tsxUri = toVirtualPath(uri);
-    const document = getTextDocument(tsxUri);
+    const { document, virtualFsPath } = getTextDocument(uri, position) ?? {};
     if (!document) {
       return;
     }
 
-    const locations = locationMap.get(uriToFsPath(tsxUri));
+    // const locations = locationMap.get(uriToFsPath(tsxUri));
 
     // should skip position outside the block
-    if (
-      locations?.some((location) => location.start
-        && location.end
-        && (location.start.line > position.line || location.end.line < position.line))
-    ) {
-      return;
-    }
+    // if (
+    //   locations?.some((location) => location.start
+    //     && location.end
+    //     && (location.start.line > position.line || location.end.line < position.line))
+    // ) {
+    //   return;
+    // }
 
     const line = document.getText({
       start: position,
@@ -46,8 +47,7 @@ export function register(languageService: ts.LanguageService, getTextDocument: (
     }
 
     const offset = document.offsetAt(position);
-    const fileName = uriToFsPath(uri);
-    const body = languageService.getCompletionsAtPosition(toVirtualPath(fileName), offset, {
+    const body = languageService.getCompletionsAtPosition(virtualFsPath!, offset, {
       includeCompletionsWithInsertText: true,
     });
 

@@ -18,11 +18,20 @@ export function register(
 
   documents.onDidChangeContent(({ document }) => {
     service.onDocumentUpdate(document);
-    const diagnostics = service.doValidation(document.uri);
-    connection.sendDiagnostics({
-      uri: document.uri,
-      diagnostics,
+
+    const openedMarkdownDocs: TextDocument[] = [];
+    documents.all().forEach(doc => {
+      if (doc.languageId === 'markdown') {
+        openedMarkdownDocs.push(doc);
+      }
     });
+    for (const doc of openedMarkdownDocs) {
+      const diagnostics = service.doValidation(doc.uri);
+      connection.sendDiagnostics({
+        uri: doc.uri,
+        diagnostics,
+      });
+    }
   });
 
   connection.onCompletion((handler) => {

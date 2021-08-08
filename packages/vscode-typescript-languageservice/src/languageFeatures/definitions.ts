@@ -5,18 +5,21 @@ import {
   LocationLink,
 } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { uriToFsPath, fsPathToUri, toVirtualPath } from '@ts-in-markdown/shared';
+import { fsPathToUri } from '@ts-in-markdown/shared';
 
-export function register(languageService: ts.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
+export function register(
+  languageService: ts.LanguageService,
+  getTextDocumentByPosition: (uri: string, position: Position) => { document?: TextDocument, virtualFsPath: string } | undefined,
+  getTextDocument: (uri: string) => (TextDocument | undefined)[]
+) {
   return (uri: string, position: Position): LocationLink[] => {
-    const tsxUri = toVirtualPath(uri);
-    const document = getTextDocument(tsxUri);
+    const { document, virtualFsPath } = getTextDocumentByPosition(uri, position) ?? {};
     if (!document) {
       return [];
     }
 
     const offset = document.offsetAt(position);
-    const body = languageService.getDefinitionAndBoundSpan(toVirtualPath(uriToFsPath(uri)), offset);
+    const body = languageService.getDefinitionAndBoundSpan(virtualFsPath!, offset);
 
     if (!body || !body.definitions) {
       return [];
@@ -29,8 +32,16 @@ export function register(languageService: ts.LanguageService, getTextDocument: (
     };
     for (const location of body.definitions) {
       const locationUri = fsPathToUri(location.fileName);
-      const doc = getTextDocument(locationUri);
-      if (doc && locationUri !== tsxUri) {
+      const docs = getTextDocument(locationUri);
+
+      docs.forEach(doc => {
+        if (!doc) {
+          return;
+        }
+
+        // if (locationUri === doc.uri) {
+        //   return;
+        // }
         const targetSelectionRange: Range = {
           start: doc.positionAt(location.textSpan.start),
           end: doc.positionAt(location.textSpan.start + location.textSpan.length),
@@ -46,7 +57,7 @@ export function register(languageService: ts.LanguageService, getTextDocument: (
           targetRange,
           targetSelectionRange,
         });
-      }
+      });
     }
 
     return locationLinks;

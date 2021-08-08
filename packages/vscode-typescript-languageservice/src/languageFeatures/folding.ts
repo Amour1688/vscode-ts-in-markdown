@@ -6,27 +6,37 @@ import {
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { uriToFsPath, toVirtualPath } from '@ts-in-markdown/shared';
 
-export function register(languageService: ts.LanguageService, getTextDocument: (uri: string) => TextDocument | undefined) {
+export function register(
+  languageService: ts.LanguageService,
+  getTextDocument: (uri: string) => (TextDocument | undefined)[]
+) {
   return (uri: string): FoldingRange[] => {
-    const tsxUri = toVirtualPath(uri);
-    const document = getTextDocument(tsxUri);
-    if (!document) {
+    const documents = getTextDocument(uri);
+    if (!documents.length) {
       return [];
     }
 
-    const outliningSpans = languageService.getOutliningSpans(toVirtualPath(uriToFsPath(uri)));
+    const foldingRanges: FoldingRange[] = [];
 
-    return outliningSpans.map<FoldingRange>((outliningSpan) => {
-      const start = document.positionAt(outliningSpan.textSpan.start);
-      const end = document.positionAt(outliningSpan.textSpan.start + outliningSpan.textSpan.length);
-      return {
-        startLine: start.line,
-        endLine: end.line,
-        startCharacter: start.character,
-        endCharacter: end.character,
-        kind: getFoldingRangeKind(outliningSpan.kind),
-      };
-    });
+    for (const document of documents) {
+      if (!document) {
+        continue;
+      }
+
+      const outliningSpans = languageService.getOutliningSpans(uriToFsPath(document.uri));
+      outliningSpans.forEach((outliningSpan) => {
+        const start = document.positionAt(outliningSpan.textSpan.start);
+        const end = document.positionAt(outliningSpan.textSpan.start + outliningSpan.textSpan.length);
+        foldingRanges.push({
+          startLine: start.line,
+          endLine: end.line,
+          startCharacter: start.character,
+          endCharacter: end.character,
+          kind: getFoldingRangeKind(outliningSpan.kind),
+        });
+      });
+    }
+    return foldingRanges;
   };
 }
 

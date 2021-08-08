@@ -23,17 +23,21 @@
   "scripts": {
     "compile": "tsc -b tsconfig.build.json",
     "package": "vsce package --yarn",
-    "watch": "tsc -b tsconfig.build.json -w"
+    "watch": "tsc -b tsconfig.build.json -w",
+    "test": "jest"
   },
   "activationEvents": [
     "onLanguage:markdown"
   ],
   "devDependencies": {
+    "@types/jest": "^26.0.24",
     "@types/node": "latest",
     "@typescript-eslint/eslint-plugin": "^4.4.1",
     "eslint": "^7.7.0",
     "eslint-config-airbnb-typescript": "^12.3.1",
     "eslint-plugin-import": "^2.22.1",
+    "jest": "^27.0.6",
+    "ts-jest": "^27.0.4",
     "typescript": "latest",
     "vsce": "latest"
   },

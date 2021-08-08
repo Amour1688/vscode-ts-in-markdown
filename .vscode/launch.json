@@ -17,7 +17,7 @@
       "preLaunchTask": {
         "type": "npm",
         "script": "watch"
-      }
+      },
     },
     {
       "type": "node",

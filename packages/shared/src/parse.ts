@@ -12,7 +12,7 @@ export interface Location {
 
 export interface SourceLocation {
   locations: Location[];
-  source?: string;
+  contents: string[];
 }
 
 export const locationMap = new Map<string, Location[]>(); // virtual path
@@ -31,10 +31,13 @@ export function parse(_source: string) {
   let column = 0;
   let shouldReplace = true;
   let location: Location | undefined = {};
+
+  const results: string[] = [];
   const sourceLocation: SourceLocation = {
     locations: [],
+    contents: [],
   };
-  const results: string[] = [];
+  
 
   while (i < _source.length) {
     const isLineBreak = _source[i] === '\n';
@@ -59,7 +62,7 @@ export function parse(_source: string) {
           line: line + 1,
           column,
           offset: i + 1,
-        },
+        }
       };
     } else if (location?.start?.line && isBlock(_source, i + 3)) {
       while (i < _source.length && _source[i] !== '\n') {
@@ -71,17 +74,25 @@ export function parse(_source: string) {
         column,
         offset: i,
       };
+
       shouldReplace = true;
       sourceLocation.locations.push(location);
+      sourceLocation.contents.push(results.join(''));
+
+      for (const index in results) {
+        if (results[index] !== '\n') {
+          results[index] = ' ';
+        }
+      }
+
       location = undefined;
     }
-    sourceLocation.source = results.join('');
   }
   return sourceLocation;
 }
 
 export function parseMarkdown(fileName: string, content: string) {
-  const { source = '', locations } = parse(content);
+  const { contents = [], locations } = parse(content);
   locationMap.set(fileName, locations);
-  return source;
+  return contents;
 }

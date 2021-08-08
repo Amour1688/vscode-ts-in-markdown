@@ -1,8 +1,9 @@
 module.exports = {
   root: true,
+  files: ['*.ts', '*.tsx'],
   parserOptions: {
     ecmaVersion: 2020,
-    project: './tsconfig.json',
+    project: ['./tsconfig.json'],
   },
   env: {
     browser: true,
