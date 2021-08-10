@@ -238,7 +238,7 @@ export function createLanguageService(
     uri: string,
     position: Position
   ): { document: TextDocument | undefined; virtualFsPath: string } | undefined;
-  function getTextDocument(uri: string): (TextDocument | undefined)[];
+  function getTextDocument(uri: string): (TextDocument | undefined)[] | undefined;
   function getTextDocument(uri: string, position?: Position) {
     const fsPath = uriToFsPath(uri);
     const markdown = mdMap.get(fsPath);

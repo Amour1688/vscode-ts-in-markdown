@@ -9,7 +9,7 @@ export function register(
     uri: string,
     position: Position
   ) => { document?: TextDocument; virtualFsPath: string } | undefined,
-  getTextDocument: (uri: string) => (TextDocument | undefined)[],
+  getTextDocument: (uri: string) => (TextDocument | undefined)[] | undefined,
 ) {
   return (uri: string, position: Position): LocationLink[] => {
     const { document, virtualFsPath } = getTextDocumentByPosition(uri, position) ?? {};
@@ -27,7 +27,7 @@ export function register(
     definitions?.forEach((definition) => {
       const targetUri = fsPathToUri(definition.fileName);
       const docs = getTextDocument(targetUri);
-      docs.forEach((doc) => {
+      docs?.forEach((doc) => {
         if (!doc) {
           return;
         }

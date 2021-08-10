@@ -28,10 +28,6 @@ export function toVirtualPath(fileName: string, index: number = 0) {
   return `${fileName}.__TS_${index}.tsx`;
 }
 
-export function toRealFilePath(fileName: string) {
-  return fileName.replace('.__TS.tsx', '');
-}
-
 export function filterEmpty<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
 }

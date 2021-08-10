@@ -49,7 +49,7 @@ export function parse(_source: string) {
       column = 0;
     }
 
-    if (isBlock(_source, i) && (isCode(_source, 'jsx', i + 3) || isCode(_source, 'tsx', i + 3))) {
+    if (isBlock(_source, i) && (isCode(_source, 'tsx', i + 3))) {
       // ```tsx live=true
       while (i < _source.length && _source[i] !== '\n') {
         results[i] = ' ';

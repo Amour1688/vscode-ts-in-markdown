@@ -1,16 +1,15 @@
 import * as ts from 'typescript';
-import {
-  Position,
-  Range,
-  LocationLink,
-} from 'vscode-languageserver/node';
+import { Position, Range, LocationLink } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { fsPathToUri } from '@ts-in-markdown/shared';
 
 export function register(
   languageService: ts.LanguageService,
-  getTextDocumentByPosition: (uri: string, position: Position) => { document?: TextDocument, virtualFsPath: string } | undefined,
-  getTextDocument: (uri: string) => (TextDocument | undefined)[],
+  getTextDocumentByPosition: (
+    uri: string,
+    position: Position
+  ) => { document?: TextDocument; virtualFsPath: string } | undefined,
+  getTextDocument: (uri: string) => (TextDocument | undefined)[] | undefined,
 ) {
   return (uri: string, position: Position): LocationLink[] => {
     const { document, virtualFsPath } = getTextDocumentByPosition(uri, position) ?? {};
@@ -19,7 +18,10 @@ export function register(
     }
 
     const offset = document.offsetAt(position);
-    const body = languageService.getDefinitionAndBoundSpan(virtualFsPath!, offset);
+    const body = languageService.getDefinitionAndBoundSpan(
+      virtualFsPath!,
+      offset,
+    );
 
     if (!body || !body.definitions) {
       return [];
@@ -34,7 +36,7 @@ export function register(
       const locationUri = fsPathToUri(location.fileName);
       const docs = getTextDocument(locationUri);
 
-      docs.forEach((doc) => {
+      docs?.forEach((doc) => {
         if (!doc) {
           return;
         }
@@ -44,12 +46,18 @@ export function register(
         // }
         const targetSelectionRange: Range = {
           start: doc.positionAt(location.textSpan.start),
-          end: doc.positionAt(location.textSpan.start + location.textSpan.length),
+          end: doc.positionAt(
+            location.textSpan.start + location.textSpan.length,
+          ),
         };
-        const targetRange: Range = location.contextSpan ? {
-          start: doc.positionAt(location.contextSpan.start),
-          end: doc.positionAt(location.contextSpan.start + location.contextSpan.length),
-        } : targetSelectionRange;
+        const targetRange: Range = location.contextSpan
+          ? {
+            start: doc.positionAt(location.contextSpan.start),
+            end: doc.positionAt(
+              location.contextSpan.start + location.contextSpan.length,
+            ),
+          }
+          : targetSelectionRange;
 
         locationLinks.push({
           originSelectionRange,

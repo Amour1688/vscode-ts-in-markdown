@@ -5,7 +5,7 @@ import { uriToFsPath, fsPathToUri } from '@ts-in-markdown/shared';
 
 export function register(
   languageService: ts.LanguageService,
-  getTextDocument: (uri: string) => (TextDocument | undefined)[],
+  getTextDocument: (uri: string) => (TextDocument | undefined)[] | undefined,
   virtualMap: Map<
   string,
   {
@@ -37,7 +37,7 @@ export function register(
       referenceEntries?.forEach((referenceEntry) => {
         const targetUri = fsPathToUri(referenceEntry.fileName);
         const docs = getTextDocument(targetUri);
-        docs.forEach((doc) => {
+        docs?.forEach((doc) => {
           if (!doc) {
             return;
           }

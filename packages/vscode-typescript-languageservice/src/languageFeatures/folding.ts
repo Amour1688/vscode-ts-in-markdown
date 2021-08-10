@@ -8,11 +8,11 @@ import { uriToFsPath } from '@ts-in-markdown/shared';
 
 export function register(
   languageService: ts.LanguageService,
-  getTextDocument: (uri: string) => (TextDocument | undefined)[],
+  getTextDocument: (uri: string) => (TextDocument | undefined)[] | undefined,
 ) {
   return (uri: string): FoldingRange[] => {
     const documents = getTextDocument(uri);
-    if (!documents.length) {
+    if (!documents?.length) {
       return [];
     }
 
