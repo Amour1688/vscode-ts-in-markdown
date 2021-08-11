@@ -1,13 +1,28 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`parseMarkdown should parse markdown 1`] = `
-Object {
-  "contents": Array [
-    "    
+Array [
+  Object {
+    "content": "    
 
       
 console.log(1)",
-    "    
+    "language": "jsx",
+    "location": Object {
+      "end": Object {
+        "column": 12,
+        "line": 3,
+        "offset": 27,
+      },
+      "start": Object {
+        "column": 0,
+        "line": 3,
+        "offset": 13,
+      },
+    },
+  },
+  Object {
+    "content": "    
 
       
               
@@ -17,7 +32,22 @@ console.log(1)",
 
       
 const a = 1",
-    "    
+    "language": "tsx",
+    "location": Object {
+      "end": Object {
+        "column": 9,
+        "line": 9,
+        "offset": 58,
+      },
+      "start": Object {
+        "column": 0,
+        "line": 9,
+        "offset": 47,
+      },
+    },
+  },
+  Object {
+    "content": "    
 
       
               
@@ -33,33 +63,8 @@ const a = 1",
 
       
 const b = 2",
-  ],
-  "locations": Array [
-    Object {
-      "end": Object {
-        "column": 12,
-        "line": 3,
-        "offset": 27,
-      },
-      "start": Object {
-        "column": 0,
-        "line": 3,
-        "offset": 13,
-      },
-    },
-    Object {
-      "end": Object {
-        "column": 9,
-        "line": 9,
-        "offset": 58,
-      },
-      "start": Object {
-        "column": 0,
-        "line": 9,
-        "offset": 47,
-      },
-    },
-    Object {
+    "language": "tsx",
+    "location": Object {
       "end": Object {
         "column": 9,
         "line": 15,
@@ -71,6 +76,6 @@ const b = 2",
         "offset": 79,
       },
     },
-  ],
-}
+  },
+]
 `;

@@ -1,5 +1,6 @@
 import * as path from 'path';
 import { URI } from 'vscode-uri';
+import { Language } from './parse';
 
 export * from './interface';
 export * from './parse';
@@ -24,8 +25,8 @@ export function normalizeFileName(fileName: string) {
   return uriToFsPath(fsPathToUri(fileName));
 }
 
-export function toVirtualPath(fileName: string, index: number = 0) {
-  return `${fileName}.__TS_${index}.tsx`;
+export function toVirtualPath(fileName: string, index: number = 0, lang?: Language) {
+  return `${fileName}.__TS_${index}.${lang || 'tsx'}`;
 }
 
 export function filterEmpty<T>(value: T | null | undefined): value is T {

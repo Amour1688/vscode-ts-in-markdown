@@ -8,7 +8,8 @@ import {
   normalizeFileName,
   toVirtualPath,
   parse,
-  Location,
+  ParsedMarkdown,
+  Language,
 } from '@ts-in-markdown/shared';
 import { Position, TextDocuments } from 'vscode-languageserver/node';
 import * as hover from './languageFeatures/hover';
@@ -47,8 +48,7 @@ export function createLanguageService(
   {
     version: number;
     fileName: string;
-    contents?: string[];
-    locations?: Location[];
+    parsedMarkdowns?: ParsedMarkdown[];
   }
   >();
   const virtualMap = new Map<
@@ -111,8 +111,8 @@ export function createLanguageService(
     for (const [markdown] of mdMap) {
       if (!mdSet.has(markdown)) {
         const value = mdMap.get(markdown);
-        value?.contents?.forEach((_, i) => {
-          virtualMap.delete(toVirtualPath(markdown, i));
+        value?.parsedMarkdowns?.forEach(({ language }, i) => {
+          virtualMap.delete(toVirtualPath(markdown, i, language));
         });
         mdMap.delete(markdown);
       }
@@ -172,7 +172,7 @@ export function createLanguageService(
       getScriptFileNames: () => [
         ...parsedCommandLine.fileNames,
         ...[...mdMap.values()]
-          .map(({ fileName, contents = [] }) => contents.map((_, i) => toVirtualPath(fileName, i)))
+          .map(({ fileName, parsedMarkdowns = [] }) => parsedMarkdowns.map(({ language }, i) => toVirtualPath(fileName, i, language)))
           .flat(),
       ],
       getScriptVersion,
@@ -220,8 +220,8 @@ export function createLanguageService(
       const { originFileName, blockIndex } = virtual;
       const markdown = mdMap.get(originFileName);
       if (markdown) {
-        const { contents = [] } = markdown;
-        return contents[blockIndex];
+        const { parsedMarkdowns = [] } = markdown;
+        return parsedMarkdowns[blockIndex].content;
       }
     }
     const doc = documents.get(fsPathToUri(fileName));
@@ -238,7 +238,9 @@ export function createLanguageService(
     uri: string,
     position: Position
   ): { document: TextDocument | undefined; virtualFsPath: string } | undefined;
-  function getTextDocument(uri: string): (TextDocument | undefined)[] | undefined;
+  function getTextDocument(
+    uri: string
+  ): (TextDocument | undefined)[] | undefined;
   function getTextDocument(uri: string, position?: Position) {
     const fsPath = uriToFsPath(uri);
     const markdown = mdMap.get(fsPath);
@@ -249,23 +251,24 @@ export function createLanguageService(
       if (!document) {
         return;
       }
-      const { locations = [] } = markdown;
-      const saveFile = (index: number) => {
-        const fileName = toVirtualPath(fsPath, index);
+      const { parsedMarkdowns = [] } = markdown;
+      const saveFile = (index: number, lang: Language) => {
+        const fileName = toVirtualPath(fsPath, index, lang);
         fileNames.push(fileName);
       };
 
       if (position) {
-        blockIndex = locations.findIndex(
-          (location) => location.start!.line <= position.line
+        blockIndex = parsedMarkdowns.findIndex(
+          ({ location }) => location.start!.line <= position.line
             && location.end!.line >= position.line,
         );
+
         if (blockIndex !== -1) {
-          saveFile(blockIndex);
+          saveFile(blockIndex, parsedMarkdowns[blockIndex].language);
         }
       } else {
-        locations.forEach((_, index) => {
-          saveFile(index);
+        parsedMarkdowns.forEach(({ language }, index) => {
+          saveFile(index, language);
         });
       }
 
@@ -316,11 +319,11 @@ export function createLanguageService(
     const markdown = mdMap.get(fsPath);
     const fileNames: string[] = [];
     if (markdown) {
-      const { contents, locations } = parse(document.getText());
-      if (contents.length) {
-        Object.assign(markdown, { contents, locations });
-        locations.forEach((_, blockIndex) => {
-          const fileName = toVirtualPath(fsPath, blockIndex);
+      const parsedMarkdowns = parse(document.getText());
+      if (parsedMarkdowns.length) {
+        Object.assign(markdown, { parsedMarkdowns });
+        parsedMarkdowns.forEach(({ language }, blockIndex) => {
+          const fileName = toVirtualPath(fsPath, blockIndex, language);
           if (!virtualMap.has(fileName)) {
             virtualMap.set(fileName, {
               originFileName: fsPath,
@@ -341,7 +344,9 @@ export function createLanguageService(
       if (snapshot) {
         const snapshotLength = snapshot.snapshot.getLength();
         const documentText = markdown
-          ? (markdown.contents || [])[virtualMap.get(fileName)!.blockIndex]
+          ? (markdown.parsedMarkdowns || [])[
+            virtualMap.get(fileName)!.blockIndex
+          ].content
           : document.getText();
         if (
           snapshotLength === documentText.length

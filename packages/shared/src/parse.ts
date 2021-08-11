@@ -15,28 +15,36 @@ export interface SourceLocation {
   contents: string[];
 }
 
-export const locationMap = new Map<string, Location[]>(); // virtual path
+export type Language = 'jsx' | 'js' | 'tsx' | 'ts';
 
-function isCode(source: string, lang: string, start: number) {
-  return source.slice(start, start + lang.length) === lang;
+export interface ParsedMarkdown {
+  location: Location;
+  content: string;
+  language: Language;
+}
+
+function isCode<T extends Language>(
+  source: string,
+  lang: T,
+  start: number,
+): T | false {
+  return source.slice(start, start + lang.length) === lang && lang;
 }
 
 function isBlock(source: string, cursor: number) {
   return source.slice(cursor, cursor + 3) === '```';
 }
 
-export function parse(_source: string) {
+export function parse(_source: string): ParsedMarkdown[] {
   let i = 0;
   let line = 0;
   let column = 0;
   let shouldReplace = true;
   let location: Location | undefined = {};
+  let lang: Language | false = false;
 
   const results: string[] = [];
-  const sourceLocation: SourceLocation = {
-    locations: [],
-    contents: [],
-  };
+  const parsedMarkdowns: ParsedMarkdown[] = [];
 
   while (i < _source.length) {
     const isLineBreak = _source[i] === '\n';
@@ -49,7 +57,14 @@ export function parse(_source: string) {
       column = 0;
     }
 
-    if (isBlock(_source, i) && (isCode(_source, 'tsx', i + 3))) {
+    if (isBlock(_source, i)) {
+      lang = isCode(_source, 'tsx', i + 3)
+        || isCode(_source, 'jsx', i + 3)
+        || isCode(_source, 'js', i + 2)
+        || isCode(_source, 'ts', i + 2);
+      if (!lang) {
+        continue;
+      }
       // ```tsx live=true
       while (i < _source.length && _source[i] !== '\n') {
         results[i] = ' ';
@@ -75,8 +90,12 @@ export function parse(_source: string) {
       };
 
       shouldReplace = true;
-      sourceLocation.locations.push(location);
-      sourceLocation.contents.push(results.join(''));
+
+      parsedMarkdowns.push({
+        location,
+        content: results.join(''),
+        language: lang as Language,
+      });
 
       for (const index in results) {
         if (results[index] !== '\n') {
@@ -84,14 +103,9 @@ export function parse(_source: string) {
         }
       }
 
+      lang = false;
       location = undefined;
     }
   }
-  return sourceLocation;
-}
-
-export function parseMarkdown(fileName: string, content: string) {
-  const { contents = [], locations } = parse(content);
-  locationMap.set(fileName, locations);
-  return contents;
+  return parsedMarkdowns;
 }
