@@ -10,6 +10,7 @@ import {
   parse,
   ParsedMarkdown,
   Language,
+  languageIdMap,
 } from '@ts-in-markdown/shared';
 import { Position, TextDocuments } from 'vscode-languageserver/node';
 import * as hover from './languageFeatures/hover';
@@ -172,7 +173,7 @@ export function createLanguageService(
       getScriptFileNames: () => [
         ...parsedCommandLine.fileNames,
         ...[...mdMap.values()]
-          .map(({ fileName, parsedMarkdowns = [] }) => parsedMarkdowns.map(({ language }, i) => toVirtualPath(fileName, i, language)))
+          .map(({ fileName, parsedMarkdowns = [] }) => parsedMarkdowns.map((_, i) => toVirtualPath(fileName, i)))
           .flat(),
       ],
       getScriptVersion,
@@ -244,7 +245,7 @@ export function createLanguageService(
   function getTextDocument(uri: string, position?: Position) {
     const fsPath = uriToFsPath(uri);
     const markdown = mdMap.get(fsPath);
-    const fileNames: string[] = [];
+    const files: { fileName: string; lang?: keyof typeof languageIdMap }[] = [];
     let blockIndex: number = -1;
     if (markdown) {
       const document = documents.get(uri);
@@ -253,8 +254,10 @@ export function createLanguageService(
       }
       const { parsedMarkdowns = [] } = markdown;
       const saveFile = (index: number, lang: Language) => {
-        const fileName = toVirtualPath(fsPath, index, lang);
-        fileNames.push(fileName);
+        files.push({
+          fileName: toVirtualPath(fsPath, index),
+          lang,
+        });
       };
 
       if (position) {
@@ -272,15 +275,17 @@ export function createLanguageService(
         });
       }
 
-      if (!fileNames.length) {
+      if (!files.length) {
         return;
       }
     } else {
-      fileNames.push(fsPath);
+      files.push({
+        fileName: fsPath,
+      });
     }
 
     const textDocuments: (TextDocument | undefined)[] = [];
-    for (const fileName of fileNames) {
+    for (const { fileName, lang = 'tsx' } of files) {
       if (!languageService.getProgram()?.getSourceFile(fileName)) {
         continue;
       }
@@ -296,7 +301,7 @@ export function createLanguageService(
           const newVersion = typeof prev?.version === 'number' ? prev.version + 1 : 0;
           const document = TextDocument.create(
             fsPathToUri(fileName),
-            'typescript',
+            languageIdMap[lang] ?? 'typescript',
             newVersion,
             scriptText,
           );
@@ -310,7 +315,7 @@ export function createLanguageService(
     }
 
     return position
-      ? { document: textDocuments[0], virtualFsPath: fileNames[0] }
+      ? { document: textDocuments[0], virtualFsPath: files[0].fileName }
       : textDocuments;
   }
 
@@ -322,8 +327,8 @@ export function createLanguageService(
       const parsedMarkdowns = parse(document.getText());
       if (parsedMarkdowns.length) {
         Object.assign(markdown, { parsedMarkdowns });
-        parsedMarkdowns.forEach(({ language }, blockIndex) => {
-          const fileName = toVirtualPath(fsPath, blockIndex, language);
+        parsedMarkdowns.forEach((_, blockIndex) => {
+          const fileName = toVirtualPath(fsPath, blockIndex);
           if (!virtualMap.has(fileName)) {
             virtualMap.set(fileName, {
               originFileName: fsPath,

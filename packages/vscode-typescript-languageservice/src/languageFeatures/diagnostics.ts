@@ -21,7 +21,7 @@ export function register(
 
     const diagnostics: Diagnostic[] = [];
     for (const document of documents) {
-      if (!document) {
+      if (!document || document.languageId === 'javascript' || document.languageId === 'javascriptreact') {
         continue;
       }
 

@@ -29,17 +29,6 @@ export function register(
       return;
     }
 
-    // const locations = locationMap.get(uriToFsPath(tsxUri));
-
-    // should skip position outside the block
-    // if (
-    //   locations?.some((location) => location.start
-    //     && location.end
-    //     && (location.start.line > position.line || location.end.line < position.line))
-    // ) {
-    //   return;
-    // }
-
     const line = document.getText({
       start: position,
       end: {

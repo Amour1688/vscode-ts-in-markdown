@@ -26,9 +26,16 @@ export function normalizeFileName(fileName: string) {
 }
 
 export function toVirtualPath(fileName: string, index: number = 0, lang?: Language) {
-  return `${fileName}.__TS_${index}.${lang || 'tsx'}`;
+  return `${fileName}.__${index}.${lang || 'tsx'}`;
 }
 
 export function filterEmpty<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
 }
+
+export const languageIdMap = {
+  ts: 'typescript',
+  js: 'javascript',
+  tsx: 'typescriptreact',
+  jsx: 'javascriptreact',
+};
