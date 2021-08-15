@@ -1,11 +1,11 @@
 {
   "name": "@ts-in-markdown/vscode-client",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "files": [
     "out"
   ],
   "dependencies": {
-    "@ts-in-markdown/shared": "^0.0.9",
+    "@ts-in-markdown/shared": "^0.0.10",
     "vscode-languageclient": "^7.1.0-next.4"
   },
   "devDependencies": {
