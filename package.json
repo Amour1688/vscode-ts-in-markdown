@@ -1,7 +1,7 @@
 {
   "name": "ts-in-markdown",
   "displayName": "TS in Markdown",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "private": true,
   "description": "Language support for TS in markdown",
   "categories": [
