@@ -60,8 +60,8 @@ export function parse(_source: string): ParsedMarkdown[] {
     if (isBlock(_source, i)) {
       lang = isCode(_source, 'tsx', i + 3)
         || isCode(_source, 'jsx', i + 3)
-        || isCode(_source, 'js', i + 2)
-        || isCode(_source, 'ts', i + 2);
+        || isCode(_source, 'js', i + 3)
+        || isCode(_source, 'ts', i + 3);
       if (!lang) {
         continue;
       }

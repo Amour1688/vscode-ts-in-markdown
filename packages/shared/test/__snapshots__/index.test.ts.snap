@@ -77,5 +77,82 @@ const b = 2",
       },
     },
   },
+  Object {
+    "content": "    
+
+      
+              
+   
+
+     
+
+      
+           
+   
+
+      
+
+      
+           
+   
+
+      
+     
+const a = 1",
+    "language": "js",
+    "location": Object {
+      "end": Object {
+        "column": 9,
+        "line": 20,
+        "offset": 120,
+      },
+      "start": Object {
+        "column": 0,
+        "line": 20,
+        "offset": 109,
+      },
+    },
+  },
+  Object {
+    "content": "    
+
+      
+              
+   
+
+     
+
+      
+           
+   
+
+      
+
+      
+           
+   
+
+      
+     
+           
+   
+
+      
+     
+const a = 1",
+    "language": "ts",
+    "location": Object {
+      "end": Object {
+        "column": 9,
+        "line": 25,
+        "offset": 150,
+      },
+      "start": Object {
+        "column": 0,
+        "line": 25,
+        "offset": 139,
+      },
+    },
+  },
 ]
 `;
