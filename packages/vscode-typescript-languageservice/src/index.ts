@@ -43,7 +43,7 @@ export function createLanguageService(
       .flat(),
   );
   const tsConfigs = [...tsConfigSet].filter((tsConfig) => tsConfigNames.includes(path.basename(tsConfig)));
-  let parsedCommandLine: ts.ParsedCommandLine;
+  let parsedCommandLine: ts.ParsedCommandLine | undefined;
   const mdMap = new Map<
   string,
   {
@@ -128,22 +128,23 @@ export function createLanguageService(
       }
     });
 
-    parsedCommandLine = createParsedCommandLine(ts, tsConfigs[0]);
-
-    const fileNames = new Set(parsedCommandLine.fileNames);
-    for (const [fileName] of tsFiles) {
-      if (!fileNames.has(fileName)) {
-        tsFiles.delete(fileName);
+    if (tsConfigs[0]) {
+      parsedCommandLine = createParsedCommandLine(ts, tsConfigs[0]);
+      const fileNames = new Set(parsedCommandLine.fileNames);
+      for (const [fileName] of tsFiles) {
+        if (!fileNames.has(fileName)) {
+          tsFiles.delete(fileName);
+        }
       }
-    }
 
-    for (const fileName of parsedCommandLine.fileNames) {
-      if (!tsFiles.has(fileName)) {
-        tsFiles.set(fileName, {
-          version: 0,
-          fileName,
-        });
-        change = true;
+      for (const fileName of parsedCommandLine.fileNames) {
+        if (!tsFiles.has(fileName)) {
+          tsFiles.set(fileName, {
+            version: 0,
+            fileName,
+          });
+          change = true;
+        }
       }
     }
 
@@ -168,16 +169,16 @@ export function createLanguageService(
       readDirectory: ts.sys.readDirectory,
       realpath: ts.sys.realpath,
       fileExists,
-      getCompilationSettings: () => parsedCommandLine.options,
+      getCompilationSettings: () => parsedCommandLine?.options ?? {},
       getProjectVersion: () => `${projectVersion}`,
       getScriptFileNames: () => [
-        ...parsedCommandLine.fileNames,
+        ...(parsedCommandLine?.fileNames || []),
         ...[...mdMap.values()]
           .map(({ fileName, parsedMarkdowns = [] }) => parsedMarkdowns.map((_, i) => toVirtualPath(fileName, i)))
           .flat(),
       ],
       getScriptVersion,
-      getCurrentDirectory: () => path.dirname(tsConfigs[0]),
+      getCurrentDirectory: () => (tsConfigs[0] ? path.dirname(tsConfigs[0]) : ''),
       getScriptSnapshot,
       getDefaultLibFileName: (options) => ts.getDefaultLibFilePath(options),
     };
