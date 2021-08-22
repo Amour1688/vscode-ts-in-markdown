@@ -4,7 +4,6 @@ import {
   DiagnosticTag,
   DiagnosticSeverity,
 } from 'vscode-languageserver/node';
-import type * as ts from 'typescript';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { uriToFsPath } from '@ts-in-markdown/shared';
 

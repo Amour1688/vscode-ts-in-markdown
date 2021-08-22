@@ -1,4 +1,3 @@
-import * as ts from 'typescript';
 import { Location, Position, Range } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { uriToFsPath, fsPathToUri } from '@ts-in-markdown/shared';

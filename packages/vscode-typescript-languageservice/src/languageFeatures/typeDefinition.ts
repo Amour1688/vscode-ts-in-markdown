@@ -1,18 +1,17 @@
-import * as ts from 'typescript';
 import { LocationLink, Position, Range } from 'vscode-languageserver/node';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { fsPathToUri } from '@ts-in-markdown/shared';
 
 export function register(
   languageService: ts.LanguageService,
-  getTextDocumentByPosition: (
+  getTextDocument: (
     uri: string,
     position: Position
   ) => { document?: TextDocument; virtualFsPath: string } | undefined,
-  getTextDocument: (uri: string) => (TextDocument | undefined)[] | undefined,
+  getTextDocuments: (uri: string) => (TextDocument | undefined)[] | undefined,
 ) {
   return (uri: string, position: Position): LocationLink[] => {
-    const { document, virtualFsPath } = getTextDocumentByPosition(uri, position) ?? {};
+    const { document, virtualFsPath } = getTextDocument(uri, position) ?? {};
     if (!document) {
       return [];
     }
@@ -26,7 +25,7 @@ export function register(
     const locationLinks: LocationLink[] = [];
     definitions?.forEach((definition) => {
       const targetUri = fsPathToUri(definition.fileName);
-      const docs = getTextDocument(targetUri);
+      const docs = getTextDocuments(targetUri);
       docs?.forEach((doc) => {
         if (!doc) {
           return;

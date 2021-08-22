@@ -46,9 +46,11 @@ function onInitialize(params: InitializeParams) {
 async function onInitialized() {
   registerApiFeatures(connection);
 
+  const ts = loadTypeScript(options.appRoot);
+
   registerMdTsFeatures(
     connection,
-    loadTypeScript(options.appRoot),
+    ts,
     documents,
     folders,
   );

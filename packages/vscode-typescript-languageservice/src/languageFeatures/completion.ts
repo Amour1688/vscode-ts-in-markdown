@@ -1,5 +1,4 @@
 /* eslint-disable no-param-reassign */
-import type * as ts from 'typescript';
 import {
   CompletionContext,
   CompletionItem,

@@ -1,6 +1,7 @@
 import type { Connection, TextDocuments } from 'vscode-languageserver/node';
 import { createLanguageService } from '@ts-in-markdown/vscode-typescript-languageservice';
 import type { TextDocument } from 'vscode-languageserver-textdocument';
+import { createTSLanguageService } from '../services/typescript';
 
 export function register(
   connection: Connection,
@@ -8,16 +9,19 @@ export function register(
   documents: TextDocuments<TextDocument>,
   folders: string[],
 ) {
-  const service = createLanguageService(ts, documents, folders);
+  const {
+    update, onDocumentUpdate, languageService, getTextDocument, virtualMap,
+  } = createTSLanguageService(ts, documents, folders);
+  const service = createLanguageService(ts, languageService, getTextDocument, getTextDocument, virtualMap);
 
   for (const folder of folders) {
     ts.sys.watchDirectory!(folder, () => {
-      service.update();
+      update();
     }, true);
   }
 
   documents.onDidChangeContent(({ document }) => {
-    service.onDocumentUpdate(document);
+    onDocumentUpdate(document);
 
     const openedMarkdownDocs: TextDocument[] = [];
     documents.all().forEach((doc) => {
