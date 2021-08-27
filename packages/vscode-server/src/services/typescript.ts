@@ -9,13 +9,12 @@ import {
   toVirtualPath,
   parse,
   ParsedMarkdown,
-  Language,
-  languageIdMap,
+  VirtualFile,
 } from '@ts-in-markdown/shared';
 import * as fg from 'fast-glob';
 import * as path from 'path';
 
-export function createTSLanguageService(
+export function createTypeScriptService(
   ts: typeof import('typescript/lib/tsserverlibrary'),
   documents: TextDocuments<TextDocument>,
   folders: string[],
@@ -54,10 +53,10 @@ export function createTSLanguageService(
   }
   >();
   const tsFiles = new Map<string, { version: number; fileName: string }>();
-  const documentsMap = new Map<
-  string,
-  { version: number; document: TextDocument }
-  >();
+  // const documentsMap = new Map<
+  // string,
+  // { version: number; document: TextDocument }
+  // >();
 
   update();
 
@@ -122,7 +121,8 @@ export function createTSLanguageService(
   return {
     dispose,
     update,
-    getTextDocument,
+    // getTextDocument,
+    getVirtualFile,
     onDocumentUpdate,
     virtualMap,
     host,
@@ -212,89 +212,117 @@ export function createTSLanguageService(
     }
   }
 
-  function getTextDocument(
-    uri: string,
-    position: Position
-  ): { document: TextDocument | undefined; virtualFsPath: string } | undefined;
-  function getTextDocument(
-    uri: string
-  ): (TextDocument | undefined)[] | undefined;
-  function getTextDocument(uri: string, position?: Position) {
+  function getVirtualFile(uri: string): VirtualFile[] | undefined;
+  function getVirtualFile(uri: string, position: Position): VirtualFile | undefined;
+  function getVirtualFile(uri: string, position?: Position) {
     const fsPath = uriToFsPath(uri);
     const markdown = mdMap.get(fsPath);
-    const files: { fileName: string; lang?: keyof typeof languageIdMap }[] = [];
-    let blockIndex: number = -1;
-    if (markdown) {
-      const document = documents.get(uri);
-      if (!document) {
-        return;
-      }
-      const { parsedMarkdowns = [] } = markdown;
-      const saveFile = (index: number, lang: Language) => {
-        files.push({
-          fileName: toVirtualPath(fsPath, index),
-          lang,
-        });
-      };
 
+    if (markdown) {
+      const { parsedMarkdowns = [] } = markdown;
       if (position) {
-        blockIndex = parsedMarkdowns.findIndex(
+        const blockIndex = parsedMarkdowns.findIndex(
           ({ location }) => location.start!.line <= position.line
             && location.end!.line >= position.line,
         );
-
         if (blockIndex !== -1) {
-          saveFile(blockIndex, parsedMarkdowns[blockIndex].language);
+          return {
+            uri: fsPathToUri(toVirtualPath(fsPath, blockIndex)),
+            lang: parsedMarkdowns[blockIndex].language,
+          };
         }
       } else {
-        parsedMarkdowns.forEach(({ language }, index) => {
-          saveFile(index, language);
-        });
+        return parsedMarkdowns.map(({ language }, index) => ({
+          uri: fsPathToUri(toVirtualPath(fsPath, index)),
+          lang: language,
+        }));
       }
-
-      if (!files.length) {
-        return;
-      }
-    } else {
-      files.push({
-        fileName: fsPath,
-      });
     }
-
-    const textDocuments: (TextDocument | undefined)[] = [];
-    for (const { fileName, lang = 'tsx' } of files) {
-      if (!languageService.getProgram()?.getSourceFile(fileName)) {
-        continue;
-      }
-      const version = host.getScriptVersion(fileName);
-      const prev = documentsMap.get(fileName);
-      if (prev?.version !== Number(version)) {
-        const scriptSnapshot = host.getScriptSnapshot(fileName);
-        if (scriptSnapshot) {
-          const scriptText = scriptSnapshot.getText(
-            0,
-            scriptSnapshot.getLength(),
-          );
-          const newVersion = typeof prev?.version === 'number' ? prev.version + 1 : 0;
-          const document = TextDocument.create(
-            fsPathToUri(fileName),
-            languageIdMap[lang] ?? 'typescript',
-            newVersion,
-            scriptText,
-          );
-          documentsMap.set(fileName, {
-            version: newVersion,
-            document,
-          });
-        }
-      }
-      textDocuments.push(documentsMap.get(fileName)?.document);
-    }
-
-    return position
-      ? { document: textDocuments[0], virtualFsPath: files[0].fileName }
-      : textDocuments;
   }
+
+  // function getTextDocument(
+  //   uri: string,
+  //   position: Position
+  // ): { document: TextDocument | undefined; virtualFsPath: string } | undefined;
+  // function getTextDocument(
+  //   uri: string
+  // ): (TextDocument | undefined)[] | undefined;
+  // function getTextDocument(uri: string, position?: Position) {
+  //   const fsPath = uriToFsPath(uri);
+  //   const markdown = mdMap.get(fsPath);
+  //   const files: { fileName: string; lang?: keyof typeof languageIdMap }[] = [];
+  //   let blockIndex: number = -1;
+  //   if (markdown) {
+  //     const document = documents.get(uri);
+  //     if (!document) {
+  //       return;
+  //     }
+  //     const { parsedMarkdowns = [] } = markdown;
+  //     const saveFile = (index: number, lang: Language) => {
+  //       files.push({
+  //         fileName: toVirtualPath(fsPath, index),
+  //         lang,
+  //       });
+  //     };
+
+  //     if (position) {
+  //       blockIndex = parsedMarkdowns.findIndex(
+  //         ({ location }) => location.start!.line <= position.line
+  //           && location.end!.line >= position.line,
+  //       );
+
+  //       if (blockIndex !== -1) {
+  //         saveFile(blockIndex, parsedMarkdowns[blockIndex].language);
+  //       }
+  //     } else {
+  //       parsedMarkdowns.forEach(({ language }, index) => {
+  //         saveFile(index, language);
+  //       });
+  //     }
+
+  //     if (!files.length) {
+  //       return;
+  //     }
+  //   } else {
+  //     files.push({
+  //       fileName: fsPath,
+  //     });
+  //   }
+
+  //   const textDocuments: (TextDocument | undefined)[] = [];
+  //   for (const { fileName, lang = 'tsx' } of files) {
+  //     if (!languageService.getProgram()?.getSourceFile(fileName)) {
+  //       continue;
+  //     }
+  //     const version = host.getScriptVersion(fileName);
+  //     const prev = documentsMap.get(fileName);
+  //     if (prev?.version !== Number(version)) {
+  //       const scriptSnapshot = host.getScriptSnapshot(fileName);
+  //       if (scriptSnapshot) {
+  //         const scriptText = scriptSnapshot.getText(
+  //           0,
+  //           scriptSnapshot.getLength(),
+  //         );
+  //         const newVersion = typeof prev?.version === 'number' ? prev.version + 1 : 0;
+  //         const document = TextDocument.create(
+  //           fsPathToUri(fileName),
+  //           languageIdMap[lang] ?? 'typescript',
+  //           newVersion,
+  //           scriptText,
+  //         );
+  //         documentsMap.set(fileName, {
+  //           version: newVersion,
+  //           document,
+  //         });
+  //       }
+  //     }
+  //     textDocuments.push(documentsMap.get(fileName)?.document);
+  //   }
+
+  //   return position
+  //     ? { document: textDocuments[0], virtualFsPath: files[0].fileName }
+  //     : textDocuments;
+  // }
 
   function onDocumentUpdate(document: TextDocument) {
     const fsPath = uriToFsPath(document.uri);

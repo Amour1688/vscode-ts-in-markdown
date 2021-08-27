@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { URI } from 'vscode-uri';
-import { Language } from './parse';
+import { Language } from './interface';
 
 export * from './interface';
 export * from './parse';

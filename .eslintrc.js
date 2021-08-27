@@ -24,7 +24,8 @@ module.exports = {
     'no-restricted-syntax': [0],
     'import/no-extraneous-dependencies': [0],
     'default-case': [0],
-    'no-continue': [0]
+    'no-continue': [0],
+    'no-await-in-loop': [0]
   },
   ignorePatterns: [
     '*.js'

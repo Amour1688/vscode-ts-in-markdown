@@ -1,4 +1,6 @@
 /* eslint-disable no-plusplus */
+import { Language } from './interface';
+
 export interface Position {
   offset: number;
   line: number;
@@ -14,8 +16,6 @@ export interface SourceLocation {
   locations: Location[];
   contents: string[];
 }
-
-export type Language = 'jsx' | 'js' | 'tsx' | 'ts';
 
 export interface ParsedMarkdown {
   location: Location;

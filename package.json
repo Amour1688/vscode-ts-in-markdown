@@ -43,6 +43,6 @@
     "vsce": "latest"
   },
   "engines": {
-    "vscode": "^1.52.0"
+    "vscode": "^1.58.0"
   }
 }
