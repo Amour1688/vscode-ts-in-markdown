@@ -7,6 +7,7 @@ import {
   ReferencesRequest,
   TextDocumentRegistrationOptions,
   FoldingRangeRequest,
+  RenameRequest,
 } from 'vscode-languageserver/node';
 
 const markdownReg: TextDocumentRegistrationOptions = {
@@ -23,6 +24,10 @@ export function register(connect: Connection) {
     documentSelector: markdownReg.documentSelector,
     triggerCharacters: ['.', '\'', '"', '`'],
     resolveProvider: true,
+  });
+  connect.client.register(RenameRequest.type, {
+    documentSelector: markdownReg.documentSelector,
+    prepareProvider: true,
   });
   connect.client.register(FoldingRangeRequest.type, markdownReg);
 }

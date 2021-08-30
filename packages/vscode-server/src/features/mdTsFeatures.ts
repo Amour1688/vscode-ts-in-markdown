@@ -12,7 +12,7 @@ export function register(
   folders: string[],
 ) {
   const {
-    update, onDocumentUpdate, languageService, host, getVirtualFile,
+    update, onDocumentUpdate, languageService, host, getVirtualFile, getOriginUri,
   } = createTypeScriptService(ts, documents, folders);
   const service = createLanguageService(ts, host, languageService);
 
@@ -67,14 +67,6 @@ export function register(
 
   connection.onCompletionResolve((item) => service.doCompletionResolve(item));
 
-  connection.onDefinition((handler) => {
-    const { textDocument: { uri }, position } = handler;
-    const virtualFile = getVirtualFile(uri, position);
-    if (virtualFile) {
-      return service.findDefinition(virtualFile.uri, position);
-    }
-  });
-
   connection.onPrepareRename((handler) => {
     const { textDocument: { uri }, position } = handler;
     const virtualFile = getVirtualFile(uri, position);
@@ -83,11 +75,19 @@ export function register(
     }
   });
 
-  connection.onRenameRequest((handler) => {
+  connection.onRenameRequest(async (handler) => {
     const { textDocument: { uri }, position, newName } = handler;
     const virtualFile = getVirtualFile(uri, position);
     if (virtualFile) {
-      return service.doRename(virtualFile.uri, position, newName);
+      const tsResult = await service.doRename(virtualFile.uri, position, newName);
+      if (tsResult) {
+        const { changes = {} } = tsResult;
+        const mdChanges: { [uri: string]: TextEdit[] } = {};
+        Object.keys(changes).forEach((changeUri) => {
+          mdChanges[getOriginUri(changeUri)] = changes[changeUri];
+        });
+        return { ...tsResult, changes: mdChanges };
+      }
     }
   });
 
@@ -118,17 +118,37 @@ export function register(
     const virtualFile = getVirtualFile(textDocument.uri, position);
 
     if (virtualFile) {
-      return service.findTypeDefinition(virtualFile.uri, position);
+      const tsResult = service.findTypeDefinition(virtualFile.uri, position);
+      return tsResult.map((tsLink) => ({
+        ...tsLink,
+        targetUri: getOriginUri(tsLink.targetUri),
+      }));
     }
   });
 
-  // connection.onReferences((handler) => {
-  //   const { textDocument: { uri }, position } = handler;
-  //   const virtualFile = getVirtualFile(uri, position);
-  //   if (virtualFile) {
-  //     return service.findReferences(virtualFile.uri, position);
-  //   }
-  // });
+  connection.onDefinition((handler) => {
+    const { textDocument: { uri }, position } = handler;
+    const virtualFile = getVirtualFile(uri, position);
+    if (virtualFile) {
+      const tsResult = service.findDefinition(virtualFile.uri, position);
+      return tsResult.map((tsLink) => ({
+        ...tsLink,
+        targetUri: getOriginUri(tsLink.targetUri),
+      }));
+    }
+  });
+
+  connection.onReferences((handler) => {
+    const { textDocument: { uri }, position } = handler;
+    const virtualFile = getVirtualFile(uri, position);
+    if (virtualFile) {
+      const tsResult = service.findReferences(virtualFile.uri, position);
+      return tsResult.map((tsLoc) => ({
+        ...tsLoc,
+        uri: getOriginUri(tsLoc.uri),
+      }));
+    }
+  });
 
   connection.onFoldingRanges((handler) => {
     const virtualFiles = getVirtualFile(handler.textDocument.uri);

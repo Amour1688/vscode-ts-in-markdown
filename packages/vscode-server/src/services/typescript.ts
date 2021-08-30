@@ -47,7 +47,7 @@ export function createTypeScriptService(
   const virtualMap = new Map<
   string,
   {
-    originFileName: string;
+    originUri: string;
     blockIndex: number;
     version: number;
   }
@@ -124,7 +124,7 @@ export function createTypeScriptService(
     // getTextDocument,
     getVirtualFile,
     onDocumentUpdate,
-    virtualMap,
+    getOriginUri,
     host,
     languageService,
   };
@@ -195,8 +195,8 @@ export function createTypeScriptService(
   function getScriptText(fileName: string): string | undefined {
     const virtual = virtualMap.get(fileName);
     if (virtual) {
-      const { originFileName, blockIndex } = virtual;
-      const markdown = mdMap.get(originFileName);
+      const { originUri, blockIndex } = virtual;
+      const markdown = mdMap.get(uriToFsPath(originUri));
       if (markdown) {
         const { parsedMarkdowns = [] } = markdown;
         return parsedMarkdowns[blockIndex].content;
@@ -240,89 +240,9 @@ export function createTypeScriptService(
     }
   }
 
-  // function getTextDocument(
-  //   uri: string,
-  //   position: Position
-  // ): { document: TextDocument | undefined; virtualFsPath: string } | undefined;
-  // function getTextDocument(
-  //   uri: string
-  // ): (TextDocument | undefined)[] | undefined;
-  // function getTextDocument(uri: string, position?: Position) {
-  //   const fsPath = uriToFsPath(uri);
-  //   const markdown = mdMap.get(fsPath);
-  //   const files: { fileName: string; lang?: keyof typeof languageIdMap }[] = [];
-  //   let blockIndex: number = -1;
-  //   if (markdown) {
-  //     const document = documents.get(uri);
-  //     if (!document) {
-  //       return;
-  //     }
-  //     const { parsedMarkdowns = [] } = markdown;
-  //     const saveFile = (index: number, lang: Language) => {
-  //       files.push({
-  //         fileName: toVirtualPath(fsPath, index),
-  //         lang,
-  //       });
-  //     };
-
-  //     if (position) {
-  //       blockIndex = parsedMarkdowns.findIndex(
-  //         ({ location }) => location.start!.line <= position.line
-  //           && location.end!.line >= position.line,
-  //       );
-
-  //       if (blockIndex !== -1) {
-  //         saveFile(blockIndex, parsedMarkdowns[blockIndex].language);
-  //       }
-  //     } else {
-  //       parsedMarkdowns.forEach(({ language }, index) => {
-  //         saveFile(index, language);
-  //       });
-  //     }
-
-  //     if (!files.length) {
-  //       return;
-  //     }
-  //   } else {
-  //     files.push({
-  //       fileName: fsPath,
-  //     });
-  //   }
-
-  //   const textDocuments: (TextDocument | undefined)[] = [];
-  //   for (const { fileName, lang = 'tsx' } of files) {
-  //     if (!languageService.getProgram()?.getSourceFile(fileName)) {
-  //       continue;
-  //     }
-  //     const version = host.getScriptVersion(fileName);
-  //     const prev = documentsMap.get(fileName);
-  //     if (prev?.version !== Number(version)) {
-  //       const scriptSnapshot = host.getScriptSnapshot(fileName);
-  //       if (scriptSnapshot) {
-  //         const scriptText = scriptSnapshot.getText(
-  //           0,
-  //           scriptSnapshot.getLength(),
-  //         );
-  //         const newVersion = typeof prev?.version === 'number' ? prev.version + 1 : 0;
-  //         const document = TextDocument.create(
-  //           fsPathToUri(fileName),
-  //           languageIdMap[lang] ?? 'typescript',
-  //           newVersion,
-  //           scriptText,
-  //         );
-  //         documentsMap.set(fileName, {
-  //           version: newVersion,
-  //           document,
-  //         });
-  //       }
-  //     }
-  //     textDocuments.push(documentsMap.get(fileName)?.document);
-  //   }
-
-  //   return position
-  //     ? { document: textDocuments[0], virtualFsPath: files[0].fileName }
-  //     : textDocuments;
-  // }
+  function getOriginUri(uri: string) {
+    return virtualMap.get(uriToFsPath(uri))?.originUri ?? uri;
+  }
 
   function onDocumentUpdate(document: TextDocument) {
     const fsPath = uriToFsPath(document.uri);
@@ -336,7 +256,7 @@ export function createTypeScriptService(
           const fileName = toVirtualPath(fsPath, blockIndex);
           if (!virtualMap.has(fileName)) {
             virtualMap.set(fileName, {
-              originFileName: fsPath,
+              originUri: document.uri,
               blockIndex,
               version: 0,
             });
