@@ -12,9 +12,6 @@
     "strict": true,
     "baseUrl": "./",
     "paths": {
-      "@ts-in-markdown/vscode-typescript-languageservice": [
-        "packages/vscode-typescript-languageservice/src"
-      ],
       "@ts-in-markdown/*": [
         "packages/*/src"
       ]

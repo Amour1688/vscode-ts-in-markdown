@@ -9,9 +9,6 @@
       "path": "./packages/vscode-server/tsconfig.build.json"
     },
     {
-      "path": "./packages/vscode-typescript-languageservice/tsconfig.build.json"
-    },
-    {
       "path": "./packages/shared/tsconfig.build.json"
     }
   ]
