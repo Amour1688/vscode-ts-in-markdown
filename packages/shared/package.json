@@ -1,6 +1,6 @@
 {
   "name": "@ts-in-markdown/shared",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "main": "out/index.js",
   "files": [
     "out"
