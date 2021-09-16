@@ -1,7 +1,7 @@
 {
   "name": "ts-in-markdown",
   "displayName": "TS in Markdown",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "private": true,
   "icon": "images/icon.png",
   "description": "Language support for TS in markdown",
